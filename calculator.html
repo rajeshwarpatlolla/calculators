@@ -1,0 +1,922 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Finance Calculators</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+            colors: {
+              brand: { DEFAULT: '#00b386', light: '#00d09c' },
+            },
+            animation: {
+              'fade-up': 'fadeUp 0.4s ease-out',
+            },
+            keyframes: {
+              fadeUp: {
+                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- Theme init (before paint) -->
+    <script>
+      if (localStorage.getItem('mf-calc-theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+
+    <style type="text/tailwindcss">
+      /* Range slider thumbs — not fully supported by Tailwind utilities */
+      input[type='range'] {
+        @apply h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 dark:bg-slate-700;
+      }
+      input[type='range']::-webkit-slider-thumb {
+        @apply h-5 w-5 appearance-none rounded-full shadow-md transition-transform hover:scale-110;
+        -webkit-appearance: none;
+      }
+      .range-sip::-webkit-slider-thumb {
+        @apply bg-blue-500;
+      }
+      .range-lump::-webkit-slider-thumb {
+        @apply bg-brand;
+      }
+      .range-swp::-webkit-slider-thumb {
+        @apply bg-violet-500;
+      }
+      .range-interest::-webkit-slider-thumb {
+        @apply bg-amber-500;
+      }
+      .range-default::-webkit-slider-thumb {
+        @apply bg-slate-500;
+      }
+      [data-field].invalid input[type='number'] {
+        @apply border-red-500 ring-1 ring-red-500;
+      }
+      input.value-input {
+        @apply w-28 shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-right font-mono text-sm font-semibold dark:border-slate-700 dark:bg-slate-800;
+      }
+      .compounding-options {
+        @apply mt-2 flex flex-wrap items-center gap-x-5 gap-y-2;
+      }
+      .compounding-option {
+        @apply flex cursor-pointer items-center gap-2;
+      }
+      .compounding-option input[type='radio'] {
+        @apply relative h-4 w-4 shrink-0 cursor-pointer appearance-none rounded-full border-2 border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-800;
+      }
+      .compounding-option input[type='radio']::after {
+        content: '';
+        @apply absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 scale-0 rounded-full transition-transform;
+      }
+      .compounding-option input[type='radio']:checked::after {
+        @apply scale-100;
+      }
+      .compounding-options--sip .compounding-option input[type='radio']:checked {
+        @apply border-blue-600;
+      }
+      .compounding-options--sip .compounding-option input[type='radio']:checked::after {
+        @apply bg-blue-600;
+      }
+      .compounding-options--lump .compounding-option input[type='radio']:checked {
+        border-color: #00b386;
+      }
+      .compounding-options--lump .compounding-option input[type='radio']:checked::after {
+        background-color: #00b386;
+      }
+      .compounding-options--swp .compounding-option input[type='radio']:checked {
+        @apply border-violet-600;
+      }
+      .compounding-options--swp .compounding-option input[type='radio']:checked::after {
+        @apply bg-violet-600;
+      }
+      .compounding-options--interest .compounding-option input[type='radio']:checked {
+        @apply border-amber-600;
+      }
+      .compounding-options--interest .compounding-option input[type='radio']:checked::after {
+        @apply bg-amber-600;
+      }
+      .compounding-option span {
+        @apply text-sm font-medium text-slate-700 dark:text-slate-300;
+      }
+    </style>
+  </head>
+
+  <body class="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased transition-colors dark:bg-slate-950 dark:text-slate-100">
+    <div class="mx-auto max-w-5xl px-4 pb-24 pt-8 sm:px-6">
+      <!-- Header -->
+      <header class="animate-fade-up mb-8 text-center">
+        <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">Finance Calculators</h1>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">SIP · Lumpsum · SWP · Interest</p>
+      </header>
+
+      <!-- Tabs -->
+      <nav class="animate-fade-up mb-6 flex gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900" role="tablist" id="tab-nav">
+        <button type="button" data-tab="sip" role="tab" aria-selected="true" class="tab-btn flex-1 rounded-lg px-2 py-2.5 text-xs font-semibold transition-all sm:px-3 sm:text-sm">SIP</button>
+        <button type="button" data-tab="lumpsum" role="tab" aria-selected="false" class="tab-btn flex-1 rounded-lg px-2 py-2.5 text-xs font-semibold transition-all sm:px-3 sm:text-sm">Lumpsum</button>
+        <button type="button" data-tab="swp" role="tab" aria-selected="false" class="tab-btn flex-1 rounded-lg px-2 py-2.5 text-xs font-semibold transition-all sm:px-3 sm:text-sm">SWP</button>
+        <button type="button" data-tab="interest" role="tab" aria-selected="false" class="tab-btn flex-1 rounded-lg px-2 py-2.5 text-xs font-semibold transition-all sm:px-3 sm:text-sm">
+          Interest
+        </button>
+      </nav>
+
+      <!-- ==================== SIP ==================== -->
+      <section id="panel-sip" class="calc-panel animate-fade-up" role="tabpanel">
+        <div class="grid gap-5 md:grid-cols-2">
+          <!-- Inputs -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 class="mb-5 flex items-center gap-2 text-base font-semibold">
+              <span class="h-2 w-2 rounded-full bg-blue-500"></span>
+              SIP inputs
+            </h2>
+
+            <div class="mb-5" data-field="sip-monthly">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="sip-monthly-num" class="text-xs font-medium text-slate-500 dark:text-slate-400">Monthly investment (₹)</label>
+                <input type="number" id="sip-monthly-num" class="value-input" min="1000" max="1000000" step="1000" value="10000" />
+              </div>
+              <input type="range" id="sip-monthly-range" class="range-sip w-full" min="1000" max="1000000" step="1000" value="10000" />
+            </div>
+
+            <div class="mb-5" data-field="sip-return">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="sip-return-num" class="text-xs font-medium text-slate-500 dark:text-slate-400">Expected return (% p.a.)</label>
+                <input type="number" id="sip-return-num" class="value-input" min="0" max="24" step="0.5" value="12" />
+              </div>
+              <input type="range" id="sip-return-range" class="range-sip w-full" min="0" max="24" step="0.5" value="12" />
+            </div>
+
+            <div data-field="sip-years">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="sip-years-num" class="text-xs font-medium text-slate-500 dark:text-slate-400">Time period (years)</label>
+                <input type="number" id="sip-years-num" class="value-input" min="1" max="50" step="1" value="10" />
+              </div>
+              <input type="range" id="sip-years-range" class="range-sip w-full" min="1" max="50" step="1" value="10" />
+            </div>
+
+            <div class="mt-5">
+              <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Compounding frequency</p>
+              <div class="compounding-options compounding-options--sip" role="radiogroup" aria-label="SIP compounding frequency">
+                <label class="compounding-option"><input type="radio" name="sip-compounding" value="monthly" checked /><span>Monthly</span></label>
+                <label class="compounding-option"><input type="radio" name="sip-compounding" value="quarterly" /><span>Quarterly</span></label>
+                <label class="compounding-option"><input type="radio" name="sip-compounding" value="annually" /><span>Annually</span></label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Results -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 class="mb-5 flex items-center gap-2 text-base font-semibold">
+              <span class="h-2 w-2 rounded-full bg-blue-500"></span>
+              SIP results
+            </h2>
+            <div class="mb-5 rounded-xl bg-blue-50 p-5 text-center dark:bg-blue-950/40">
+              <p class="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Total value</p>
+              <p id="sip-total" class="mt-1 font-mono text-3xl font-bold">—</p>
+            </div>
+            <div class="mb-5 grid grid-cols-2 gap-3">
+              <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                <p class="text-xs text-slate-500 dark:text-slate-400">Invested amount</p>
+                <p id="sip-invested" class="mt-1 font-mono text-sm font-semibold">—</p>
+              </div>
+              <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                <p class="text-xs text-slate-500 dark:text-slate-400">Estimated returns</p>
+                <p id="sip-returns" class="mt-1 font-mono text-sm font-semibold text-brand dark:text-brand-light">—</p>
+              </div>
+            </div>
+            <div class="h-56">
+              <canvas id="sip-pie-chart" aria-label="SIP breakdown donut chart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== LUMP SUM ==================== -->
+      <section id="panel-lumpsum" class="calc-panel hidden" role="tabpanel">
+        <div class="grid gap-5 md:grid-cols-2">
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 class="mb-5 flex items-center gap-2 text-base font-semibold">
+              <span class="h-2 w-2 rounded-full bg-brand"></span>
+              Lumpsum inputs
+            </h2>
+
+            <div class="mb-5" data-field="lump-amount">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="lump-amount-num" class="text-xs font-medium text-slate-500 dark:text-slate-400">Investment amount (₹)</label>
+                <input type="number" id="lump-amount-num" class="value-input" min="1000" max="100000000" step="1000" value="100000" />
+              </div>
+              <input type="range" id="lump-amount-range" class="range-lump w-full" min="1000" max="10000000" step="1000" value="100000" />
+            </div>
+
+            <div class="mb-5" data-field="lump-return">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="lump-return-num" class="text-xs font-medium text-slate-500 dark:text-slate-400">Expected return (% p.a.)</label>
+                <input type="number" id="lump-return-num" class="value-input" min="0" max="24" step="0.5" value="12" />
+              </div>
+              <input type="range" id="lump-return-range" class="range-lump w-full" min="0" max="24" step="0.5" value="12" />
+            </div>
+
+            <div data-field="lump-years">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="lump-years-num" class="text-xs font-medium text-slate-500 dark:text-slate-400">Time period (years)</label>
+                <input type="number" id="lump-years-num" class="value-input" min="1" max="50" step="1" value="10" />
+              </div>
+              <input type="range" id="lump-years-range" class="range-lump w-full" min="1" max="50" step="1" value="10" />
+            </div>
+
+            <div class="mt-5">
+              <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Compounding frequency</p>
+              <div class="compounding-options compounding-options--lump" role="radiogroup" aria-label="Lumpsum compounding frequency">
+                <label class="compounding-option"><input type="radio" name="lump-compounding" value="monthly" checked /><span>Monthly</span></label>
+                <label class="compounding-option"><input type="radio" name="lump-compounding" value="quarterly" /><span>Quarterly</span></label>
+                <label class="compounding-option"><input type="radio" name="lump-compounding" value="annually" /><span>Annually</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 class="mb-5 flex items-center gap-2 text-base font-semibold">
+              <span class="h-2 w-2 rounded-full bg-brand"></span>
+              Lumpsum results
+            </h2>
+            <div class="mb-5 rounded-xl bg-emerald-50 p-5 text-center dark:bg-emerald-950/30">
+              <p class="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Total value</p>
+              <p id="lump-total" class="mt-1 font-mono text-3xl font-bold">—</p>
+            </div>
+            <div class="mb-5 grid grid-cols-2 gap-3">
+              <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                <p class="text-xs text-slate-500 dark:text-slate-400">Invested amount</p>
+                <p id="lump-invested" class="mt-1 font-mono text-sm font-semibold">—</p>
+              </div>
+              <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                <p class="text-xs text-slate-500 dark:text-slate-400">Estimated returns</p>
+                <p id="lump-returns" class="mt-1 font-mono text-sm font-semibold text-brand dark:text-brand-light">—</p>
+              </div>
+            </div>
+            <div class="h-56">
+              <canvas id="lump-pie-chart" aria-label="Lumpsum breakdown donut chart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== SWP ==================== -->
+      <section id="panel-swp" class="calc-panel hidden" role="tabpanel">
+        <div class="grid gap-5 md:grid-cols-2">
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 class="mb-5 flex items-center gap-2 text-base font-semibold">
+              <span class="h-2 w-2 rounded-full bg-violet-500"></span>
+              SWP inputs
+            </h2>
+
+            <div class="mb-5" data-field="swp-corpus">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="swp-corpus-num" class="text-xs font-medium text-slate-500 dark:text-slate-400">Initial corpus (₹)</label>
+                <input type="number" id="swp-corpus-num" class="value-input" min="10000" max="10000000" step="10000" value="5000000" />
+              </div>
+              <input type="range" id="swp-corpus-range" class="range-swp w-full" min="100000" max="10000000" step="100000" value="5000000" />
+            </div>
+
+            <div class="mb-5" data-field="swp-withdraw">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="swp-withdraw-num" class="text-xs font-medium text-slate-500 dark:text-slate-400">Monthly withdrawal (₹)</label>
+                <input type="number" id="swp-withdraw-num" class="value-input" min="1000" max="1000000" step="1000" value="24000" />
+              </div>
+              <input type="range" id="swp-withdraw-range" class="range-swp w-full" min="1000" max="500000" step="1000" value="24000" />
+            </div>
+
+            <div class="mb-5" data-field="swp-return">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="swp-return-num" class="text-xs font-medium text-slate-500 dark:text-slate-400">Expected return (% p.a.)</label>
+                <input type="number" id="swp-return-num" class="value-input" min="0" max="24" step="0.5" value="10" />
+              </div>
+              <input type="range" id="swp-return-range" class="range-swp w-full" min="0" max="24" step="0.5" value="10" />
+            </div>
+
+            <div class="mb-5" data-field="swp-increase">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="swp-increase-num" class="text-xs font-medium text-slate-500 dark:text-slate-400">Annual withdrawal increase (%)</label>
+                <input type="number" id="swp-increase-num" class="value-input" min="0" max="20" step="0.5" value="5" />
+              </div>
+              <input type="range" id="swp-increase-range" class="range-swp w-full" min="0" max="20" step="0.5" value="5" />
+            </div>
+
+            <div data-field="swp-years">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="swp-years-num" class="text-xs font-medium text-slate-500 dark:text-slate-400">Duration (years)</label>
+                <input type="number" id="swp-years-num" class="value-input" min="1" max="50" step="1" value="20" />
+              </div>
+              <input type="range" id="swp-years-range" class="range-swp w-full" min="1" max="50" step="1" value="20" />
+            </div>
+
+            <div class="mt-5">
+              <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Compounding frequency</p>
+              <div class="compounding-options compounding-options--swp" role="radiogroup" aria-label="SWP compounding frequency">
+                <label class="compounding-option"><input type="radio" name="swp-compounding" value="monthly" checked /><span>Monthly</span></label>
+                <label class="compounding-option"><input type="radio" name="swp-compounding" value="quarterly" /><span>Quarterly</span></label>
+                <label class="compounding-option"><input type="radio" name="swp-compounding" value="annually" /><span>Annually</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div id="swp-results-card" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 class="mb-5 flex items-center gap-2 text-base font-semibold">
+              <span class="h-2 w-2 rounded-full bg-violet-500"></span>
+              SWP results
+            </h2>
+            <div class="mb-5 rounded-xl bg-violet-50 p-5 text-center dark:bg-violet-950/40">
+              <p class="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Remaining corpus</p>
+              <p id="swp-remaining-hero" class="mt-1 font-mono text-3xl font-bold">—</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+                <p class="text-xs text-slate-500">Initial corpus</p>
+                <p id="swp-initial" class="mt-1 font-mono text-xs font-semibold sm:text-sm">—</p>
+              </div>
+              <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+                <p class="text-xs text-slate-500">Total withdrawn</p>
+                <p id="swp-total-withdrawn" class="mt-1 font-mono text-xs font-semibold sm:text-sm">—</p>
+              </div>
+              <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+                <p class="text-xs text-slate-500">Remaining + withdrawn</p>
+                <p id="swp-total-value" class="mt-1 font-mono text-xs font-semibold sm:text-sm">—</p>
+              </div>
+              <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+                <p class="text-xs text-slate-500">Ending monthly withdrawal</p>
+                <p id="swp-ending-withdrawal" class="mt-1 font-mono text-xs font-semibold sm:text-sm">—</p>
+              </div>
+            </div>
+            <div class="mt-5 h-56">
+              <canvas id="swp-pie-chart" aria-label="SWP breakdown donut chart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== INTEREST ==================== -->
+      <section id="panel-interest" class="calc-panel hidden" role="tabpanel">
+        <div class="grid gap-5 md:grid-cols-2">
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 class="mb-5 flex items-center gap-2 text-base font-semibold">
+              <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+              Interest inputs
+            </h2>
+
+            <div class="mb-5">
+              <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Interest type</p>
+              <div class="compounding-options compounding-options--interest" role="radiogroup" aria-label="Interest type">
+                <label class="compounding-option"><input type="radio" name="interest-type" value="simple" checked /><span>Simple</span></label>
+                <label class="compounding-option"><input type="radio" name="interest-type" value="compound" /><span>Compound</span></label>
+              </div>
+            </div>
+
+            <div class="mb-5" data-field="int-principal">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="int-principal-num" class="text-xs font-medium text-slate-500 dark:text-slate-400">Principal amount (₹)</label>
+                <input type="number" id="int-principal-num" class="value-input" min="1000" max="100000000" step="1000" value="100000" />
+              </div>
+              <input type="range" id="int-principal-range" class="range-interest w-full" min="1000" max="10000000" step="1000" value="100000" />
+            </div>
+
+            <div class="mb-5" data-field="int-rate">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="int-rate-num" class="text-xs font-medium text-slate-500 dark:text-slate-400">Annual interest rate (%)</label>
+                <input type="number" id="int-rate-num" class="value-input" min="0" max="30" step="0.5" value="8" />
+              </div>
+              <input type="range" id="int-rate-range" class="range-interest w-full" min="0" max="30" step="0.5" value="8" />
+            </div>
+
+            <div class="mb-5" data-field="int-years">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="int-years-num" class="text-xs font-medium text-slate-500 dark:text-slate-400">Time period (years)</label>
+                <input type="number" id="int-years-num" class="value-input" min="1" max="50" step="1" value="5" />
+              </div>
+              <input type="range" id="int-years-range" class="range-interest w-full" min="1" max="50" step="1" value="5" />
+            </div>
+
+            <div id="interest-compounding-wrap" class="hidden">
+              <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Compounding frequency</p>
+              <div class="compounding-options compounding-options--interest" role="radiogroup" aria-label="Interest compounding frequency">
+                <label class="compounding-option"><input type="radio" name="interest-compounding" value="monthly" checked /><span>Monthly</span></label>
+                <label class="compounding-option"><input type="radio" name="interest-compounding" value="quarterly" /><span>Quarterly</span></label>
+                <label class="compounding-option"><input type="radio" name="interest-compounding" value="annually" /><span>Annually</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h2 class="mb-5 flex items-center gap-2 text-base font-semibold">
+              <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+              Interest results
+            </h2>
+            <div class="mb-5 rounded-xl bg-amber-50 p-5 text-center dark:bg-amber-950/40">
+              <p class="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Total amount</p>
+              <p id="int-total" class="mt-1 font-mono text-3xl font-bold">—</p>
+            </div>
+            <div class="mb-5 grid grid-cols-2 gap-3">
+              <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                <p class="text-xs text-slate-500 dark:text-slate-400">Principal</p>
+                <p id="int-principal" class="mt-1 font-mono text-sm font-semibold">—</p>
+              </div>
+              <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+                <p class="text-xs text-slate-500 dark:text-slate-400">Interest earned</p>
+                <p id="int-interest" class="mt-1 font-mono text-sm font-semibold text-amber-600 dark:text-amber-400">—</p>
+              </div>
+            </div>
+            <div class="h-56">
+              <canvas id="int-pie-chart" aria-label="Interest breakdown donut chart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <p class="mt-8 text-center text-xs text-slate-400 dark:text-slate-500">Illustrative estimates only — not financial advice. Consult a qualified advisor before investing.</p>
+    </div>
+
+    <!-- Theme toggle -->
+    <button
+      type="button"
+      id="theme-toggle"
+      class="fixed bottom-5 right-5 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-xl shadow-lg transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
+      aria-label="Switch to dark mode"
+    >
+      <span id="theme-toggle-icon" aria-hidden="true">🌙</span>
+    </button>
+
+    <script>
+      /* ==========================================================
+         FINANCE CALCULATORS — Tailwind + vanilla JS
+         ========================================================== */
+
+      // ---------- Theme (Tailwind dark class) ----------
+      const themeToggle = document.getElementById('theme-toggle');
+
+      function updateThemeButton() {
+        const isDark = document.documentElement.classList.contains('dark');
+        document.getElementById('theme-toggle-icon').textContent = isDark ? '☀️' : '🌙';
+        themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+      }
+
+      if (localStorage.getItem('mf-calc-theme') === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+      updateThemeButton();
+
+      themeToggle.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+        localStorage.setItem('mf-calc-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        updateThemeButton();
+        updateChartsTheme();
+      });
+
+      // ---------- Tab active styles ----------
+      const TAB_STYLES = {
+        sip: 'bg-blue-50 text-blue-600 shadow-inner ring-1 ring-blue-200 dark:bg-blue-950/50 dark:text-blue-400 dark:ring-blue-800',
+        lumpsum: 'bg-emerald-50 text-brand shadow-inner ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-brand-light dark:ring-emerald-800',
+        swp: 'bg-violet-50 text-violet-600 shadow-inner ring-1 ring-violet-200 dark:bg-violet-950/50 dark:text-violet-400 dark:ring-violet-800',
+        interest: 'bg-amber-50 text-amber-600 shadow-inner ring-1 ring-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:ring-amber-800',
+      };
+      const TAB_INACTIVE = 'text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200';
+
+      function setActiveTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach((btn) => {
+          const isActive = btn.dataset.tab === tabName;
+          btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+          btn.className = `tab-btn flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${isActive ? TAB_STYLES[tabName] : TAB_INACTIVE}`;
+        });
+        document.querySelectorAll('.calc-panel').forEach((p) => p.classList.add('hidden'));
+        document.getElementById(`panel-${tabName}`).classList.remove('hidden');
+      }
+
+      document.querySelectorAll('.tab-btn').forEach((tab) => {
+        tab.addEventListener('click', () => setActiveTab(tab.dataset.tab));
+      });
+      setActiveTab('sip');
+
+      // ---------- Validation ----------
+      function sanitizeNumber(value, min, max, fallback) {
+        const n = Number(value);
+        if (!Number.isFinite(n) || Number.isNaN(n)) return fallback;
+        return Math.min(max, Math.max(min, n));
+      }
+
+      // ---------- formatCurrency — Indian numbering ----------
+      function formatCurrency(amount) {
+        const n = Math.round(Number(amount) || 0);
+        const sign = n < 0 ? '-' : '';
+        const abs = Math.abs(n);
+        const str = abs.toString();
+        if (str.length <= 3) return `${sign}₹${str}`;
+        const last3 = str.slice(-3);
+        let rest = str.slice(0, -3);
+        const parts = [];
+        while (rest.length > 2) {
+          parts.unshift(rest.slice(-2));
+          rest = rest.slice(0, -2);
+        }
+        if (rest.length) parts.unshift(rest);
+        return `${sign}₹${parts.join(',')},${last3}`;
+      }
+
+      const COMPOUNDING = {
+        monthly: { periodsPerYear: 12, label: 'Monthly' },
+        quarterly: { periodsPerYear: 4, label: 'Quarterly' },
+        annually: { periodsPerYear: 1, label: 'Annually' },
+      };
+
+      function getCompoundingConfig(freq) {
+        return COMPOUNDING[freq] || COMPOUNDING.monthly;
+      }
+
+      // Effective periodic rate — same CAGR regardless of compounding count (lumpsum FV identical)
+      function getEffectivePeriodicRate(annualRatePercent, periodsPerYear) {
+        const annual = sanitizeNumber(annualRatePercent, 0, 100, 0) / 100;
+        return Math.pow(1 + annual, 1 / periodsPerYear) - 1;
+      }
+
+      // Nominal periodic rate (annual ÷ periods) — more frequent compounding → higher returns
+      function getNominalPeriodicRate(annualRatePercent, periodsPerYear) {
+        return sanitizeNumber(annualRatePercent, 0, 100, 0) / 100 / periodsPerYear;
+      }
+
+      // ---------- calculateSIP: monthly = annuity due (effective); less frequent = ordinary ----------
+      function calculateSIP(monthlyInvestment, annualRatePercent, years, compounding) {
+        const { periodsPerYear } = getCompoundingConfig(compounding);
+        const monthly = sanitizeNumber(monthlyInvestment, 0, 1e9, 0);
+        const P = monthly * (12 / periodsPerYear);
+        const yearsSafe = sanitizeNumber(years, 1, 50, 1);
+        const n = Math.round(yearsSafe * periodsPerYear);
+        const investedAmount = monthly * yearsSafe * 12;
+
+        if (n <= 0) return { investedAmount: 0, estimatedReturns: 0, totalValue: 0 };
+
+        const r = getEffectivePeriodicRate(annualRatePercent, periodsPerYear);
+        let totalValue = investedAmount;
+        if (r > 0) {
+          const ordinary = P * ((Math.pow(1 + r, n) - 1) / r);
+          totalValue = compounding === 'monthly' ? ordinary * (1 + r) : ordinary;
+        }
+        const estimatedReturns = totalValue - investedAmount;
+
+        return {
+          investedAmount,
+          estimatedReturns: Math.max(0, estimatedReturns),
+          totalValue: Math.max(0, totalValue),
+        };
+      }
+
+      // ---------- calculateLumpSum: FV = P × (1 + r)^n, r = nominal annual ÷ periods ----------
+      function calculateLumpSum(investmentAmount, annualRatePercent, years, compounding) {
+        const { periodsPerYear } = getCompoundingConfig(compounding);
+        const P = sanitizeNumber(investmentAmount, 0, 1e12, 0);
+        const yearsSafe = sanitizeNumber(years, 1, 50, 1);
+        const n = yearsSafe * periodsPerYear;
+        const r = getNominalPeriodicRate(annualRatePercent, periodsPerYear);
+        const totalValue = r === 0 ? P : P * Math.pow(1 + r, n);
+
+        return {
+          investedAmount: P,
+          estimatedReturns: Math.max(0, totalValue - P),
+          totalValue: Math.max(0, totalValue),
+        };
+      }
+
+      // ---------- SWP: monthly withdrawals; growth at selected compounding frequency ----------
+      function runSWPSimulation(corpus, monthlyWithdrawal, annualReturnPercent, annualIncreasePercent, years, compounding) {
+        const { periodsPerYear } = getCompoundingConfig(compounding);
+        const annualIncr = annualIncreasePercent / 100;
+        const totalMonths = Math.round(sanitizeNumber(years, 1, 50, 1) * 12);
+        const monthsPerCompound = 12 / periodsPerYear;
+        const growthRate = compounding === 'monthly' ? getEffectivePeriodicRate(annualReturnPercent, 12) : getEffectivePeriodicRate(annualReturnPercent, periodsPerYear);
+
+        let balance = sanitizeNumber(corpus, 0, 1e12, 0);
+        let withdraw = sanitizeNumber(monthlyWithdrawal, 0, 1e9, 0);
+        let totalWithdrawn = 0;
+        let monthsSinceCompound = 0;
+
+        for (let m = 1; m <= totalMonths; m++) {
+          if (m > 1 && (m - 1) % 12 === 0) withdraw *= 1 + annualIncr;
+
+          monthsSinceCompound += 1;
+          if (compounding === 'monthly') {
+            balance *= 1 + growthRate;
+          } else if (monthsSinceCompound >= monthsPerCompound) {
+            balance *= 1 + growthRate;
+            monthsSinceCompound = 0;
+          }
+
+          const actualWithdraw = Math.min(withdraw, Math.max(0, balance));
+          balance -= actualWithdraw;
+          totalWithdrawn += actualWithdraw;
+
+          if (balance <= 0 || actualWithdraw < withdraw - 0.01) break;
+        }
+
+        return {
+          remainingCorpus: Math.max(0, balance),
+          totalWithdrawn,
+          endingMonthlyWithdrawal: withdraw,
+        };
+      }
+
+      function calculateSWP(corpus, monthlyWithdrawal, annualReturnPercent, annualIncreasePercent, years, compounding) {
+        return runSWPSimulation(corpus, monthlyWithdrawal, annualReturnPercent, annualIncreasePercent, years, compounding);
+      }
+
+      // ---------- Chart.js ----------
+      let sipChart = null;
+      let lumpChart = null;
+      let swpChart = null;
+      let interestChart = null;
+
+      function getChartPalette(variant) {
+        const isDark = document.documentElement.classList.contains('dark');
+        if (variant === 'sip') {
+          return {
+            segmentA: isDark ? '#334155' : '#e2e8f0',
+            segmentAHover: isDark ? '#475569' : '#cbd5e1',
+            segmentB: isDark ? '#3b82f6' : '#2563eb',
+            segmentBHover: isDark ? '#60a5fa' : '#3b82f6',
+            border: isDark ? '#0f172a' : '#ffffff',
+            text: isDark ? '#cbd5e1' : '#475569',
+          };
+        }
+        if (variant === 'swp') {
+          return {
+            segmentA: isDark ? '#334155' : '#e2e8f0',
+            segmentAHover: isDark ? '#475569' : '#cbd5e1',
+            segmentB: isDark ? '#8b5cf6' : '#7c3aed',
+            segmentBHover: isDark ? '#a78bfa' : '#8b5cf6',
+            border: isDark ? '#0f172a' : '#ffffff',
+            text: isDark ? '#cbd5e1' : '#475569',
+          };
+        }
+        if (variant === 'interest') {
+          return {
+            segmentA: isDark ? '#334155' : '#e2e8f0',
+            segmentAHover: isDark ? '#475569' : '#cbd5e1',
+            segmentB: isDark ? '#d97706' : '#f59e0b',
+            segmentBHover: isDark ? '#f59e0b' : '#d97706',
+            border: isDark ? '#0f172a' : '#ffffff',
+            text: isDark ? '#cbd5e1' : '#475569',
+          };
+        }
+        return {
+          segmentA: isDark ? '#44403c' : '#e7e5e4',
+          segmentAHover: isDark ? '#57534e' : '#d6d3d1',
+          segmentB: isDark ? '#00d09c' : '#00b386',
+          segmentBHover: isDark ? '#34d399' : '#00d09c',
+          border: isDark ? '#0f172a' : '#ffffff',
+          text: isDark ? '#cbd5e1' : '#475569',
+        };
+      }
+
+      function createDonutChart(canvasId, variant, segmentA, segmentB, existingChart, labels = ['Invested amount', 'Wealth gained']) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas || typeof Chart === 'undefined') return null;
+
+        const palette = getChartPalette(variant);
+        const values = [Math.max(0, segmentA), Math.max(0, segmentB)];
+        const data = {
+          labels,
+          datasets: [
+            {
+              data: values,
+              backgroundColor: [palette.segmentA, palette.segmentB],
+              hoverBackgroundColor: [palette.segmentAHover, palette.segmentBHover],
+              borderColor: palette.border,
+              borderWidth: 3,
+              hoverBorderWidth: 3,
+              hoverOffset: 6,
+            },
+          ],
+        };
+        const options = {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '58%',
+          animation: { animateRotate: true, duration: 600 },
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: palette.text,
+                padding: 18,
+                font: { size: 12, weight: '500' },
+                usePointStyle: true,
+                pointStyle: 'circle',
+                boxWidth: 8,
+              },
+            },
+            tooltip: {
+              backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#0f172a',
+              titleColor: '#f8fafc',
+              bodyColor: '#e2e8f0',
+              padding: 12,
+              callbacks: {
+                label: (ctx) => {
+                  const total = values[0] + values[1];
+                  const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : '0.0';
+                  return `${ctx.label}: ${formatCurrency(ctx.raw)} (${pct}%)`;
+                },
+              },
+            },
+          },
+        };
+
+        if (existingChart) {
+          existingChart.data = data;
+          existingChart.options = options;
+          existingChart.update();
+          return existingChart;
+        }
+        return new Chart(canvas, { type: 'doughnut', data, options });
+      }
+
+      function updateChartsTheme() {
+        if (sipChart) createDonutChart('sip-pie-chart', 'sip', sipChart.data.datasets[0].data[0], sipChart.data.datasets[0].data[1], sipChart, sipChart.data.labels);
+        if (lumpChart) createDonutChart('lump-pie-chart', 'lump', lumpChart.data.datasets[0].data[0], lumpChart.data.datasets[0].data[1], lumpChart, lumpChart.data.labels);
+        if (swpChart) createDonutChart('swp-pie-chart', 'swp', swpChart.data.datasets[0].data[0], swpChart.data.datasets[0].data[1], swpChart, swpChart.data.labels);
+        if (interestChart) createDonutChart('int-pie-chart', 'interest', interestChart.data.datasets[0].data[0], interestChart.data.datasets[0].data[1], interestChart, interestChart.data.labels);
+      }
+
+      function getCompoundingValue(groupName) {
+        return document.querySelector(`input[name="${groupName}"]:checked`)?.value || 'monthly';
+      }
+
+      function getInterestType() {
+        return document.querySelector('input[name="interest-type"]:checked')?.value || 'simple';
+      }
+
+      function updateInterestCompoundingVisibility() {
+        const wrap = document.getElementById('interest-compounding-wrap');
+        wrap.classList.toggle('hidden', getInterestType() !== 'compound');
+      }
+
+      // ---------- calculateInterest ----------
+      function calculateInterest(principal, annualRatePercent, years, interestType, compounding) {
+        const P = sanitizeNumber(principal, 0, 1e12, 0);
+        const yearsSafe = sanitizeNumber(years, 1, 50, 1);
+        const rate = sanitizeNumber(annualRatePercent, 0, 100, 0);
+
+        if (interestType === 'simple') {
+          const interest = (P * rate * yearsSafe) / 100;
+          return {
+            principal: P,
+            interest: Math.max(0, interest),
+            totalAmount: Math.max(0, P + interest),
+          };
+        }
+
+        const lump = calculateLumpSum(P, rate, yearsSafe, compounding);
+        return {
+          principal: lump.investedAmount,
+          interest: lump.estimatedReturns,
+          totalAmount: lump.totalValue,
+        };
+      }
+
+      function bindCompoundingRadios(groupName, onUpdate) {
+        document.querySelectorAll(`input[name="${groupName}"]`).forEach((radio) => {
+          radio.addEventListener('change', onUpdate);
+        });
+      }
+
+      // ---------- Dual input binding ----------
+      function bindDualInput(numId, rangeId, fieldKey, onUpdate, min, max) {
+        const numEl = document.getElementById(numId);
+        const rangeEl = document.getElementById(rangeId);
+        const fieldEl = document.querySelector(`[data-field="${fieldKey}"]`);
+
+        function syncFromValue(raw) {
+          const val = sanitizeNumber(raw, min, max, min);
+          numEl.value = val;
+          rangeEl.value = val;
+          if (fieldEl) fieldEl.classList.toggle('invalid', val < min);
+          onUpdate();
+        }
+
+        numEl.addEventListener('input', () => syncFromValue(numEl.value));
+        rangeEl.addEventListener('input', () => syncFromValue(rangeEl.value));
+        syncFromValue(numEl.value);
+      }
+
+      // ---------- Recalculate ----------
+      function recalcSIP() {
+        const result = calculateSIP(
+          +document.getElementById('sip-monthly-num').value,
+          +document.getElementById('sip-return-num').value,
+          +document.getElementById('sip-years-num').value,
+          getCompoundingValue('sip-compounding')
+        );
+        document.getElementById('sip-total').textContent = formatCurrency(result.totalValue);
+        document.getElementById('sip-invested').textContent = formatCurrency(result.investedAmount);
+        document.getElementById('sip-returns').textContent = formatCurrency(result.estimatedReturns);
+        sipChart = createDonutChart('sip-pie-chart', 'sip', result.investedAmount, result.estimatedReturns, sipChart);
+      }
+
+      function recalcLumpSum() {
+        const result = calculateLumpSum(
+          +document.getElementById('lump-amount-num').value,
+          +document.getElementById('lump-return-num').value,
+          +document.getElementById('lump-years-num').value,
+          getCompoundingValue('lump-compounding')
+        );
+        document.getElementById('lump-total').textContent = formatCurrency(result.totalValue);
+        document.getElementById('lump-invested').textContent = formatCurrency(result.investedAmount);
+        document.getElementById('lump-returns').textContent = formatCurrency(result.estimatedReturns);
+        lumpChart = createDonutChart('lump-pie-chart', 'lump', result.investedAmount, result.estimatedReturns, lumpChart);
+      }
+
+      function recalcSWP() {
+        const result = calculateSWP(
+          +document.getElementById('swp-corpus-num').value,
+          +document.getElementById('swp-withdraw-num').value,
+          +document.getElementById('swp-return-num').value,
+          +document.getElementById('swp-increase-num').value,
+          +document.getElementById('swp-years-num').value,
+          getCompoundingValue('swp-compounding')
+        );
+
+        document.getElementById('swp-remaining-hero').textContent = formatCurrency(result.remainingCorpus);
+        document.getElementById('swp-initial').textContent = formatCurrency(+document.getElementById('swp-corpus-num').value);
+        document.getElementById('swp-total-withdrawn').textContent = formatCurrency(result.totalWithdrawn);
+        document.getElementById('swp-total-value').textContent = formatCurrency(result.remainingCorpus + result.totalWithdrawn);
+        document.getElementById('swp-ending-withdrawal').textContent = formatCurrency(result.endingMonthlyWithdrawal);
+        swpChart = createDonutChart('swp-pie-chart', 'swp', result.totalWithdrawn, result.remainingCorpus, swpChart, ['Total withdrawn', 'Remaining corpus']);
+      }
+
+      function recalcInterest() {
+        const result = calculateInterest(
+          +document.getElementById('int-principal-num').value,
+          +document.getElementById('int-rate-num').value,
+          +document.getElementById('int-years-num').value,
+          getInterestType(),
+          getCompoundingValue('interest-compounding')
+        );
+        document.getElementById('int-total').textContent = formatCurrency(result.totalAmount);
+        document.getElementById('int-principal').textContent = formatCurrency(result.principal);
+        document.getElementById('int-interest').textContent = formatCurrency(result.interest);
+        interestChart = createDonutChart('int-pie-chart', 'interest', result.principal, result.interest, interestChart, ['Principal', 'Interest earned']);
+      }
+
+      // ---------- Init inputs ----------
+      bindDualInput('sip-monthly-num', 'sip-monthly-range', 'sip-monthly', recalcSIP, 1000, 1000000);
+      bindDualInput('sip-return-num', 'sip-return-range', 'sip-return', recalcSIP, 0, 24);
+      bindDualInput('sip-years-num', 'sip-years-range', 'sip-years', recalcSIP, 1, 50);
+
+      bindDualInput('lump-amount-num', 'lump-amount-range', 'lump-amount', recalcLumpSum, 1000, 10000000);
+      bindDualInput('lump-return-num', 'lump-return-range', 'lump-return', recalcLumpSum, 0, 24);
+      bindDualInput('lump-years-num', 'lump-years-range', 'lump-years', recalcLumpSum, 1, 50);
+
+      bindDualInput('swp-corpus-num', 'swp-corpus-range', 'swp-corpus', recalcSWP, 100000, 10000000);
+      bindDualInput('swp-withdraw-num', 'swp-withdraw-range', 'swp-withdraw', recalcSWP, 1000, 500000);
+      bindDualInput('swp-return-num', 'swp-return-range', 'swp-return', recalcSWP, 0, 24);
+      bindDualInput('swp-increase-num', 'swp-increase-range', 'swp-increase', recalcSWP, 0, 20);
+      bindDualInput('swp-years-num', 'swp-years-range', 'swp-years', recalcSWP, 1, 50);
+
+      bindCompoundingRadios('sip-compounding', recalcSIP);
+      bindCompoundingRadios('lump-compounding', recalcLumpSum);
+      bindCompoundingRadios('swp-compounding', recalcSWP);
+      bindCompoundingRadios('interest-compounding', recalcInterest);
+
+      document.querySelectorAll('input[name="interest-type"]').forEach((radio) => {
+        radio.addEventListener('change', () => {
+          updateInterestCompoundingVisibility();
+          recalcInterest();
+        });
+      });
+
+      bindDualInput('int-principal-num', 'int-principal-range', 'int-principal', recalcInterest, 1000, 10000000);
+      bindDualInput('int-rate-num', 'int-rate-range', 'int-rate', recalcInterest, 0, 30);
+      bindDualInput('int-years-num', 'int-years-range', 'int-years', recalcInterest, 1, 50);
+
+      updateInterestCompoundingVisibility();
+      recalcSIP();
+      recalcLumpSum();
+      recalcSWP();
+      recalcInterest();
+    </script>
+  </body>
+</html>
