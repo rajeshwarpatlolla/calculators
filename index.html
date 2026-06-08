@@ -216,9 +216,9 @@
             <div class="mb-5" data-field="sip-monthly">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="sip-monthly-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Monthly investment (₹)</label>
-                <input type="number" id="sip-monthly-num" class="value-input" min="1000" max="1000000" step="1000" value="10000" />
+                <input type="number" id="sip-monthly-num" class="value-input" min="0" max="1000000" step="1000" value="10000" />
               </div>
-              <input type="range" id="sip-monthly-range" class="range-sip w-full" min="1000" max="1000000" step="1000" value="10000" />
+              <input type="range" id="sip-monthly-range" class="range-sip w-full" min="0" max="1000000" step="1000" value="10000" />
             </div>
 
             <div class="mb-5" data-field="sip-return">
@@ -232,9 +232,9 @@
             <div data-field="sip-years">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="sip-years-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Time period (years)</label>
-                <input type="number" id="sip-years-num" class="value-input" min="1" max="50" step="1" value="10" />
+                <input type="number" id="sip-years-num" class="value-input" min="0" max="50" step="1" value="10" />
               </div>
-              <input type="range" id="sip-years-range" class="range-sip w-full" min="1" max="50" step="1" value="10" />
+              <input type="range" id="sip-years-range" class="range-sip w-full" min="0" max="50" step="1" value="10" />
             </div>
 
             <div class="mt-5">
@@ -286,9 +286,9 @@
             <div class="mb-5" data-field="lump-amount">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="lump-amount-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Investment amount (₹)</label>
-                <input type="number" id="lump-amount-num" class="value-input" min="1000" max="10000000" step="1000" value="100000" inputmode="numeric" />
+                <input type="number" id="lump-amount-num" class="value-input" min="0" max="10000000" step="1000" value="100000" inputmode="numeric" />
               </div>
-              <input type="range" id="lump-amount-range" class="range-lump w-full" min="1000" max="10000000" step="1000" value="100000" />
+              <input type="range" id="lump-amount-range" class="range-lump w-full" min="0" max="10000000" step="1000" value="100000" />
             </div>
 
             <div class="mb-5" data-field="lump-return">
@@ -302,9 +302,9 @@
             <div data-field="lump-years">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="lump-years-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Time period (years)</label>
-                <input type="number" id="lump-years-num" class="value-input" min="1" max="50" step="1" value="10" />
+                <input type="number" id="lump-years-num" class="value-input" min="0" max="50" step="1" value="10" />
               </div>
-              <input type="range" id="lump-years-range" class="range-lump w-full" min="1" max="50" step="1" value="10" />
+              <input type="range" id="lump-years-range" class="range-lump w-full" min="0" max="50" step="1" value="10" />
             </div>
 
             <div class="mt-5">
@@ -355,17 +355,17 @@
             <div class="mb-5" data-field="swp-corpus">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="swp-corpus-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Initial corpus (₹)</label>
-                <input type="number" id="swp-corpus-num" class="value-input" min="100000" max="10000000" step="100000" value="1000000" inputmode="numeric" />
+                <input type="number" id="swp-corpus-num" class="value-input" min="0" max="10000000" step="100000" value="1000000" inputmode="numeric" />
               </div>
-              <input type="range" id="swp-corpus-range" class="range-swp w-full" min="100000" max="10000000" step="100000" value="1000000" />
+              <input type="range" id="swp-corpus-range" class="range-swp w-full" min="0" max="10000000" step="100000" value="1000000" />
             </div>
 
             <div class="mb-5" data-field="swp-withdraw">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="swp-withdraw-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Monthly withdrawal (₹)</label>
-                <input type="number" id="swp-withdraw-num" class="value-input" min="1000" max="1000000" step="1000" value="10000" />
+                <input type="number" id="swp-withdraw-num" class="value-input" min="0" max="1000000" step="1000" value="10000" />
               </div>
-              <input type="range" id="swp-withdraw-range" class="range-swp w-full" min="1000" max="500000" step="1000" value="10000" />
+              <input type="range" id="swp-withdraw-range" class="range-swp w-full" min="0" max="500000" step="1000" value="10000" />
             </div>
 
             <div class="mb-5" data-field="swp-return">
@@ -387,9 +387,9 @@
             <div data-field="swp-years">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="swp-years-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Duration (years)</label>
-                <input type="number" id="swp-years-num" class="value-input" min="1" max="50" step="1" value="10" />
+                <input type="number" id="swp-years-num" class="value-input" min="0" max="50" step="1" value="10" />
               </div>
-              <input type="range" id="swp-years-range" class="range-swp w-full" min="1" max="50" step="1" value="10" />
+              <input type="range" id="swp-years-range" class="range-swp w-full" min="0" max="50" step="1" value="10" />
             </div>
 
             <div class="mt-5">
@@ -456,9 +456,9 @@
             <div class="mb-5" data-field="int-principal">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="int-principal-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Principal amount (₹)</label>
-                <input type="number" id="int-principal-num" class="value-input" min="1000" max="100000000" step="1000" value="100000" />
+                <input type="number" id="int-principal-num" class="value-input" min="0" max="100000000" step="1000" value="100000" />
               </div>
-              <input type="range" id="int-principal-range" class="range-interest w-full" min="1000" max="10000000" step="1000" value="100000" />
+              <input type="range" id="int-principal-range" class="range-interest w-full" min="0" max="10000000" step="1000" value="100000" />
             </div>
 
             <div class="mb-5" data-field="int-rate">
@@ -472,9 +472,9 @@
             <div class="mb-5" data-field="int-years">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="int-years-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Time period (years)</label>
-                <input type="number" id="int-years-num" class="value-input" min="1" max="50" step="1" value="5" />
+                <input type="number" id="int-years-num" class="value-input" min="0" max="50" step="1" value="5" />
               </div>
-              <input type="range" id="int-years-range" class="range-interest w-full" min="1" max="50" step="1" value="5" />
+              <input type="range" id="int-years-range" class="range-interest w-full" min="0" max="50" step="1" value="5" />
             </div>
 
             <div id="interest-compounding-wrap" class="hidden">
@@ -692,11 +692,11 @@
         const { periodsPerYear } = getCompoundingConfig(compounding);
         const monthly = sanitizeNumber(monthlyInvestment, 0, 1e9, 0);
         const P = monthly * (12 / periodsPerYear);
-        const yearsSafe = sanitizeNumber(years, 1, 50, 1);
+        const yearsSafe = sanitizeNumber(years, 0, 50, 0);
         const n = Math.round(yearsSafe * periodsPerYear);
         const investedAmount = monthly * yearsSafe * 12;
 
-        if (n <= 0) return { investedAmount: 0, estimatedReturns: 0, totalValue: 0 };
+        if (n <= 0) return { investedAmount, estimatedReturns: 0, totalValue: investedAmount };
 
         const r = getEffectivePeriodicRate(annualRatePercent, periodsPerYear);
         let totalValue = investedAmount;
@@ -717,10 +717,10 @@
       function calculateLumpSum(investmentAmount, annualRatePercent, years, compounding) {
         const { periodsPerYear } = getCompoundingConfig(compounding);
         const P = sanitizeNumber(investmentAmount, 0, 1e12, 0);
-        const yearsSafe = sanitizeNumber(years, 1, 50, 1);
+        const yearsSafe = sanitizeNumber(years, 0, 50, 0);
         const n = yearsSafe * periodsPerYear;
         const r = getNominalPeriodicRate(annualRatePercent, periodsPerYear);
-        const totalValue = r === 0 ? P : P * Math.pow(1 + r, n);
+        const totalValue = n <= 0 || r === 0 ? P : P * Math.pow(1 + r, n);
 
         return {
           investedAmount: P,
@@ -733,7 +733,7 @@
       function runSWPSimulation(corpus, monthlyWithdrawal, annualReturnPercent, annualIncreasePercent, years, compounding) {
         const { periodsPerYear } = getCompoundingConfig(compounding);
         const annualIncr = annualIncreasePercent / 100;
-        const totalMonths = Math.round(sanitizeNumber(years, 1, 50, 1) * 12);
+        const totalMonths = Math.round(sanitizeNumber(years, 0, 50, 0) * 12);
         const monthsPerCompound = 12 / periodsPerYear;
         const growthRate = compounding === 'monthly' ? getEffectivePeriodicRate(annualReturnPercent, 12) : getEffectivePeriodicRate(annualReturnPercent, periodsPerYear);
 
@@ -915,7 +915,7 @@
       // ---------- calculateInterest ----------
       function calculateInterest(principal, annualRatePercent, years, interestType, compounding) {
         const P = sanitizeNumber(principal, 0, 1e12, 0);
-        const yearsSafe = sanitizeNumber(years, 1, 50, 1);
+        const yearsSafe = sanitizeNumber(years, 0, 50, 0);
         const rate = sanitizeNumber(annualRatePercent, 0, 100, 0);
 
         if (interestType === 'simple') {
@@ -1056,19 +1056,19 @@
 
       // ---------- Init inputs ----------
       suppressRecalc = true;
-      bindDualInput('sip-monthly-num', 'sip-monthly-range', 'sip-monthly', recalcSIP, 1000, 1000000);
+      bindDualInput('sip-monthly-num', 'sip-monthly-range', 'sip-monthly', recalcSIP, 0, 1000000);
       bindDualInput('sip-return-num', 'sip-return-range', 'sip-return', recalcSIP, 0, 24);
-      bindDualInput('sip-years-num', 'sip-years-range', 'sip-years', recalcSIP, 1, 50);
+      bindDualInput('sip-years-num', 'sip-years-range', 'sip-years', recalcSIP, 0, 50);
 
-      bindDualInput('lump-amount-num', 'lump-amount-range', 'lump-amount', recalcLumpSum, 1000, 10000000);
+      bindDualInput('lump-amount-num', 'lump-amount-range', 'lump-amount', recalcLumpSum, 0, 10000000);
       bindDualInput('lump-return-num', 'lump-return-range', 'lump-return', recalcLumpSum, 0, 24);
-      bindDualInput('lump-years-num', 'lump-years-range', 'lump-years', recalcLumpSum, 1, 50);
+      bindDualInput('lump-years-num', 'lump-years-range', 'lump-years', recalcLumpSum, 0, 50);
 
-      bindDualInput('swp-corpus-num', 'swp-corpus-range', 'swp-corpus', recalcSWP, 100000, 10000000);
-      bindDualInput('swp-withdraw-num', 'swp-withdraw-range', 'swp-withdraw', recalcSWP, 1000, 500000);
+      bindDualInput('swp-corpus-num', 'swp-corpus-range', 'swp-corpus', recalcSWP, 0, 10000000);
+      bindDualInput('swp-withdraw-num', 'swp-withdraw-range', 'swp-withdraw', recalcSWP, 0, 500000);
       bindDualInput('swp-return-num', 'swp-return-range', 'swp-return', recalcSWP, 0, 24);
       bindDualInput('swp-increase-num', 'swp-increase-range', 'swp-increase', recalcSWP, 0, 20);
-      bindDualInput('swp-years-num', 'swp-years-range', 'swp-years', recalcSWP, 1, 50);
+      bindDualInput('swp-years-num', 'swp-years-range', 'swp-years', recalcSWP, 0, 50);
 
       bindCompoundingRadios('sip-compounding', recalcSIP);
       bindCompoundingRadios('lump-compounding', recalcLumpSum);
@@ -1082,9 +1082,9 @@
         });
       });
 
-      bindDualInput('int-principal-num', 'int-principal-range', 'int-principal', recalcInterest, 1000, 10000000);
+      bindDualInput('int-principal-num', 'int-principal-range', 'int-principal', recalcInterest, 0, 10000000);
       bindDualInput('int-rate-num', 'int-rate-range', 'int-rate', recalcInterest, 0, 30);
-      bindDualInput('int-years-num', 'int-years-range', 'int-years', recalcInterest, 1, 50);
+      bindDualInput('int-years-num', 'int-years-range', 'int-years', recalcInterest, 0, 50);
 
       updateInterestCompoundingVisibility();
 
