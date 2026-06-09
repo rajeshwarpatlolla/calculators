@@ -355,9 +355,9 @@
             <div class="mb-5" data-field="swp-corpus">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="swp-corpus-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Initial corpus (₹)</label>
-                <input type="number" id="swp-corpus-num" class="value-input" min="0" max="10000000" step="100000" value="1000000" inputmode="numeric" />
+                <input type="number" id="swp-corpus-num" class="value-input" min="0" max="50000000" step="100000" value="1000000" inputmode="numeric" />
               </div>
-              <input type="range" id="swp-corpus-range" class="range-swp w-full" min="0" max="10000000" step="100000" value="1000000" />
+              <input type="range" id="swp-corpus-range" class="range-swp w-full" min="0" max="50000000" step="100000" value="1000000" />
             </div>
 
             <div class="mb-5" data-field="swp-withdraw">
@@ -387,9 +387,9 @@
             <div data-field="swp-years">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="swp-years-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Duration (years)</label>
-                <input type="number" id="swp-years-num" class="value-input" min="0" max="50" step="1" value="10" />
+                <input type="number" id="swp-years-num" class="value-input" min="0" max="100" step="1" value="10" />
               </div>
-              <input type="range" id="swp-years-range" class="range-swp w-full" min="0" max="50" step="1" value="10" />
+              <input type="range" id="swp-years-range" class="range-swp w-full" min="0" max="100" step="1" value="10" />
             </div>
 
             <div class="mt-5">
@@ -733,7 +733,7 @@
       function runSWPSimulation(corpus, monthlyWithdrawal, annualReturnPercent, annualIncreasePercent, years, compounding) {
         const { periodsPerYear } = getCompoundingConfig(compounding);
         const annualIncr = annualIncreasePercent / 100;
-        const totalMonths = Math.round(sanitizeNumber(years, 0, 50, 0) * 12);
+        const totalMonths = Math.round(sanitizeNumber(years, 0, 100, 0) * 12);
         const monthsPerCompound = 12 / periodsPerYear;
         const growthRate = compounding === 'monthly' ? getEffectivePeriodicRate(annualReturnPercent, 12) : getEffectivePeriodicRate(annualReturnPercent, periodsPerYear);
 
@@ -1064,11 +1064,11 @@
       bindDualInput('lump-return-num', 'lump-return-range', 'lump-return', recalcLumpSum, 0, 24);
       bindDualInput('lump-years-num', 'lump-years-range', 'lump-years', recalcLumpSum, 0, 50);
 
-      bindDualInput('swp-corpus-num', 'swp-corpus-range', 'swp-corpus', recalcSWP, 0, 10000000);
+      bindDualInput('swp-corpus-num', 'swp-corpus-range', 'swp-corpus', recalcSWP, 0, 50000000);
       bindDualInput('swp-withdraw-num', 'swp-withdraw-range', 'swp-withdraw', recalcSWP, 0, 500000);
       bindDualInput('swp-return-num', 'swp-return-range', 'swp-return', recalcSWP, 0, 24);
       bindDualInput('swp-increase-num', 'swp-increase-range', 'swp-increase', recalcSWP, 0, 20);
-      bindDualInput('swp-years-num', 'swp-years-range', 'swp-years', recalcSWP, 0, 50);
+      bindDualInput('swp-years-num', 'swp-years-range', 'swp-years', recalcSWP, 0, 100);
 
       bindCompoundingRadios('sip-compounding', recalcSIP);
       bindCompoundingRadios('lump-compounding', recalcLumpSum);
