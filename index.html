@@ -428,7 +428,7 @@
 
             <div class="mb-5" data-field="swp-increase">
               <div class="mb-2 flex items-center justify-between gap-3">
-                <label for="swp-increase-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Annual withdrawal increase (%)</label>
+                <label for="swp-increase-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Annual withdrawal increase / inflation (%)</label>
                 <input type="number" id="swp-increase-num" class="value-input" min="0" max="20" step="0.5" value="5" />
               </div>
               <input type="range" id="swp-increase-range" class="range-swp w-full" min="0" max="20" step="0.5" value="5" />
@@ -831,7 +831,8 @@
       function runSWPSimulation(corpus, monthlyWithdrawal, annualReturnPercent, annualIncreasePercent, years, compounding) {
         const { periodsPerYear } = getCompoundingConfig(compounding);
         const annualIncr = annualIncreasePercent / 100;
-        const totalMonths = Math.round(sanitizeNumber(years, 0, 100, 0) * 12);
+        const yearsSafe = sanitizeNumber(years, 0, 100, 0);
+        const totalMonths = Math.round(yearsSafe * 12);
         const monthsPerCompound = 12 / periodsPerYear;
         const growthRate = compounding === 'monthly' ? getEffectivePeriodicRate(annualReturnPercent, 12) : getEffectivePeriodicRate(annualReturnPercent, periodsPerYear);
 
@@ -854,12 +855,13 @@
           const actualWithdraw = Math.min(withdraw, Math.max(0, balance));
           balance -= actualWithdraw;
           totalWithdrawn += actualWithdraw;
+          balance = Math.max(0, balance);
 
           if (balance <= 0 || actualWithdraw < withdraw - 0.01) break;
         }
 
         return {
-          remainingCorpus: Math.max(0, balance),
+          remainingCorpus: balance,
           totalWithdrawn,
           endingMonthlyWithdrawal: withdraw,
         };
@@ -920,6 +922,7 @@
 
         const corpusSeries = [balance];
         const withdrawnSeries = [0];
+        let depletedFromYear = null;
 
         for (let m = 1; m <= totalMonths; m++) {
           if (m > 1 && (m - 1) % 12 === 0) withdraw *= 1 + annualIncr;
@@ -935,18 +938,35 @@
           const actualWithdraw = Math.min(withdraw, Math.max(0, balance));
           balance -= actualWithdraw;
           totalWithdrawn += actualWithdraw;
+          balance = Math.max(0, balance);
+
+          const depletedNow = balance <= 0 || actualWithdraw < withdraw - 0.01;
 
           if (m % 12 === 0 || m === totalMonths) {
-            corpusSeries.push(Math.max(0, balance));
+            corpusSeries.push(balance);
             withdrawnSeries.push(totalWithdrawn);
           }
 
-          if (balance <= 0 || actualWithdraw < withdraw - 0.01) break;
+          if (depletedNow) {
+            depletedFromYear = Math.min(yearsSafe, Math.ceil(m / 12));
+            while (corpusSeries.length <= depletedFromYear) {
+              corpusSeries.push(0);
+              withdrawnSeries.push(totalWithdrawn);
+            }
+            corpusSeries[depletedFromYear] = 0;
+            withdrawnSeries[depletedFromYear] = totalWithdrawn;
+            break;
+          }
         }
 
+        const padCorpus = depletedFromYear !== null ? 0 : balance;
         while (corpusSeries.length < yearsSafe + 1) {
-          corpusSeries.push(corpusSeries[corpusSeries.length - 1] ?? 0);
-          withdrawnSeries.push(totalWithdrawn);
+          corpusSeries.push(padCorpus);
+          withdrawnSeries.push(withdrawnSeries[withdrawnSeries.length - 1] ?? totalWithdrawn);
+        }
+
+        if (depletedFromYear !== null) {
+          for (let i = depletedFromYear; i < corpusSeries.length; i++) corpusSeries[i] = 0;
         }
 
         return { labels: buildYearLabels(yearsSafe), corpus: corpusSeries, withdrawn: withdrawnSeries };
