@@ -139,6 +139,28 @@
       .compounding-option span {
         @apply text-sm font-medium text-slate-700 dark:text-stone-200;
       }
+      .chart-view-toggle {
+        @apply inline-flex shrink-0 rounded-lg border border-slate-200 bg-slate-100 p-0.5 dark:border-night-border dark:bg-night-elevated;
+      }
+      .chart-view-btn {
+        @apply rounded-md px-2.5 py-1 text-[11px] font-semibold text-slate-500 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 dark:text-night-muted dark:focus-visible:ring-offset-night-card;
+      }
+      .chart-view-btn[aria-pressed='true'] {
+        @apply bg-white text-slate-800 shadow-sm dark:bg-night-card dark:text-stone-100;
+      }
+      .chart-view-toggle--sip .chart-view-btn[aria-pressed='true'] {
+        @apply text-blue-600 ring-blue-400 dark:text-blue-300;
+      }
+      .chart-view-toggle--lump .chart-view-btn[aria-pressed='true'] {
+        color: #00b386;
+        @apply dark:text-brand-light;
+      }
+      .chart-view-toggle--swp .chart-view-btn[aria-pressed='true'] {
+        @apply text-violet-600 ring-violet-400 dark:text-violet-300;
+      }
+      .chart-view-toggle--interest .chart-view-btn[aria-pressed='true'] {
+        @apply text-amber-600 ring-amber-400 dark:text-amber-300;
+      }
     </style>
   </head>
 
@@ -232,9 +254,9 @@
             <div data-field="sip-years">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="sip-years-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Time period (years)</label>
-                <input type="number" id="sip-years-num" class="value-input" min="0" max="50" step="1" value="10" />
+                <input type="number" id="sip-years-num" class="value-input" min="0" max="100" step="1" value="10" />
               </div>
-              <input type="range" id="sip-years-range" class="range-sip w-full" min="0" max="50" step="1" value="10" />
+              <input type="range" id="sip-years-range" class="range-sip w-full" min="0" max="100" step="1" value="10" />
             </div>
 
             <div class="mt-5">
@@ -267,8 +289,22 @@
                 <p id="sip-returns" class="mt-1 font-mono text-sm font-semibold text-brand dark:text-brand-light">—</p>
               </div>
             </div>
-            <div class="h-56">
-              <canvas id="sip-pie-chart" aria-label="SIP breakdown donut chart"></canvas>
+            <div class="chart-section" data-calc="sip">
+              <div class="mb-3 flex items-center justify-between gap-2">
+                <p class="text-xs font-medium text-slate-500 dark:text-night-muted">Visualisation</p>
+                <div class="chart-view-toggle chart-view-toggle--sip" role="group" aria-label="SIP chart type">
+                  <button type="button" class="chart-view-btn" data-calc="sip" data-view="pie" aria-pressed="true">Breakdown</button>
+                  <button type="button" class="chart-view-btn" data-calc="sip" data-view="line" aria-pressed="false">Timeline</button>
+                </div>
+              </div>
+              <div class="relative h-60">
+                <div class="chart-panel absolute inset-0" data-calc="sip" data-view="pie">
+                  <canvas id="sip-pie-chart" aria-label="SIP breakdown donut chart"></canvas>
+                </div>
+                <div class="chart-panel absolute inset-0 hidden" data-calc="sip" data-view="line">
+                  <canvas id="sip-line-chart" aria-label="SIP growth over time line chart"></canvas>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -302,9 +338,9 @@
             <div data-field="lump-years">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="lump-years-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Time period (years)</label>
-                <input type="number" id="lump-years-num" class="value-input" min="0" max="50" step="1" value="10" />
+                <input type="number" id="lump-years-num" class="value-input" min="0" max="100" step="1" value="10" />
               </div>
-              <input type="range" id="lump-years-range" class="range-lump w-full" min="0" max="50" step="1" value="10" />
+              <input type="range" id="lump-years-range" class="range-lump w-full" min="0" max="100" step="1" value="10" />
             </div>
 
             <div class="mt-5">
@@ -336,8 +372,22 @@
                 <p id="lump-returns" class="mt-1 font-mono text-sm font-semibold text-brand dark:text-brand-light">—</p>
               </div>
             </div>
-            <div class="h-56">
-              <canvas id="lump-pie-chart" aria-label="Lumpsum breakdown donut chart"></canvas>
+            <div class="chart-section" data-calc="lumpsum">
+              <div class="mb-3 flex items-center justify-between gap-2">
+                <p class="text-xs font-medium text-slate-500 dark:text-night-muted">Visualisation</p>
+                <div class="chart-view-toggle chart-view-toggle--lump" role="group" aria-label="Lumpsum chart type">
+                  <button type="button" class="chart-view-btn" data-calc="lumpsum" data-view="pie" aria-pressed="true">Breakdown</button>
+                  <button type="button" class="chart-view-btn" data-calc="lumpsum" data-view="line" aria-pressed="false">Timeline</button>
+                </div>
+              </div>
+              <div class="relative h-60">
+                <div class="chart-panel absolute inset-0" data-calc="lumpsum" data-view="pie">
+                  <canvas id="lump-pie-chart" aria-label="Lumpsum breakdown donut chart"></canvas>
+                </div>
+                <div class="chart-panel absolute inset-0 hidden" data-calc="lumpsum" data-view="line">
+                  <canvas id="lump-line-chart" aria-label="Lumpsum growth over time line chart"></canvas>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -429,8 +479,22 @@
                 <p id="swp-ending-withdrawal" class="mt-1 font-mono text-xs font-semibold sm:text-sm">—</p>
               </div>
             </div>
-            <div class="mt-5 h-56">
-              <canvas id="swp-pie-chart" aria-label="SWP breakdown donut chart"></canvas>
+            <div class="chart-section mt-5" data-calc="swp">
+              <div class="mb-3 flex items-center justify-between gap-2">
+                <p class="text-xs font-medium text-slate-500 dark:text-night-muted">Visualisation</p>
+                <div class="chart-view-toggle chart-view-toggle--swp" role="group" aria-label="SWP chart type">
+                  <button type="button" class="chart-view-btn" data-calc="swp" data-view="pie" aria-pressed="true">Breakdown</button>
+                  <button type="button" class="chart-view-btn" data-calc="swp" data-view="line" aria-pressed="false">Timeline</button>
+                </div>
+              </div>
+              <div class="relative h-60">
+                <div class="chart-panel absolute inset-0" data-calc="swp" data-view="pie">
+                  <canvas id="swp-pie-chart" aria-label="SWP breakdown donut chart"></canvas>
+                </div>
+                <div class="chart-panel absolute inset-0 hidden" data-calc="swp" data-view="line">
+                  <canvas id="swp-line-chart" aria-label="SWP corpus over time line chart"></canvas>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -464,17 +528,17 @@
             <div class="mb-5" data-field="int-rate">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="int-rate-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Annual interest rate (%)</label>
-                <input type="number" id="int-rate-num" class="value-input" min="0" max="30" step="0.5" value="8" />
+                <input type="number" id="int-rate-num" class="value-input" min="0" max="36" step="0.5" value="8" />
               </div>
-              <input type="range" id="int-rate-range" class="range-interest w-full" min="0" max="30" step="0.5" value="8" />
+              <input type="range" id="int-rate-range" class="range-interest w-full" min="0" max="36" step="0.5" value="8" />
             </div>
 
             <div class="mb-5" data-field="int-years">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="int-years-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Time period (years)</label>
-                <input type="number" id="int-years-num" class="value-input" min="0" max="50" step="1" value="5" />
+                <input type="number" id="int-years-num" class="value-input" min="0" max="100" step="1" value="5" />
               </div>
-              <input type="range" id="int-years-range" class="range-interest w-full" min="0" max="50" step="1" value="5" />
+              <input type="range" id="int-years-range" class="range-interest w-full" min="0" max="100" step="1" value="5" />
             </div>
 
             <div id="interest-compounding-wrap" class="hidden">
@@ -506,8 +570,22 @@
                 <p id="int-interest" class="mt-1 font-mono text-sm font-semibold text-amber-600 dark:text-amber-400">—</p>
               </div>
             </div>
-            <div class="h-56">
-              <canvas id="int-pie-chart" aria-label="Interest breakdown donut chart"></canvas>
+            <div class="chart-section" data-calc="interest">
+              <div class="mb-3 flex items-center justify-between gap-2">
+                <p class="text-xs font-medium text-slate-500 dark:text-night-muted">Visualisation</p>
+                <div class="chart-view-toggle chart-view-toggle--interest" role="group" aria-label="Interest chart type">
+                  <button type="button" class="chart-view-btn" data-calc="interest" data-view="pie" aria-pressed="true">Breakdown</button>
+                  <button type="button" class="chart-view-btn" data-calc="interest" data-view="line" aria-pressed="false">Timeline</button>
+                </div>
+              </div>
+              <div class="relative h-60">
+                <div class="chart-panel absolute inset-0" data-calc="interest" data-view="pie">
+                  <canvas id="int-pie-chart" aria-label="Interest breakdown donut chart"></canvas>
+                </div>
+                <div class="chart-panel absolute inset-0 hidden" data-calc="interest" data-view="line">
+                  <canvas id="int-line-chart" aria-label="Interest growth over time line chart"></canvas>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -608,8 +686,10 @@
       }
 
       function resizeChartsForTab(tabName) {
-        const chartByTab = { sip: sipChart, lumpsum: lumpChart, swp: swpChart, interest: interestChart };
-        const chart = chartByTab[tabName];
+        const pieByTab = { sip: sipChart, lumpsum: lumpChart, swp: swpChart, interest: interestChart };
+        const lineByTab = { sip: sipLineChart, lumpsum: lumpLineChart, swp: swpLineChart, interest: interestLineChart };
+        const view = chartViewModes[tabName] || 'pie';
+        const chart = view === 'line' ? lineByTab[tabName] : pieByTab[tabName];
         if (chart) chart.resize();
       }
 
@@ -666,6 +746,24 @@
         return `${sign}₹${parts.join(',')},${last3}`;
       }
 
+      // Compact labels for chart axes — Cr / L / K (Indian units)
+      function formatCurrencyCompact(amount) {
+        const n = Math.round(Number(amount) || 0);
+        const sign = n < 0 ? '-' : '';
+        const abs = Math.abs(n);
+
+        function fmtUnit(value) {
+          if (value >= 100) return String(Math.round(value));
+          if (value >= 10) return String(Math.round(value * 10) / 10);
+          return String(Math.round(value * 100) / 100);
+        }
+
+        if (abs >= 1e7) return `${sign}₹${fmtUnit(abs / 1e7)}Cr`;
+        if (abs >= 1e5) return `${sign}₹${fmtUnit(abs / 1e5)}L`;
+        if (abs >= 1e3) return `${sign}₹${fmtUnit(abs / 1e3)}K`;
+        return `${sign}₹${abs}`;
+      }
+
       const COMPOUNDING = {
         monthly: { periodsPerYear: 12, label: 'Monthly' },
         quarterly: { periodsPerYear: 4, label: 'Quarterly' },
@@ -692,7 +790,7 @@
         const { periodsPerYear } = getCompoundingConfig(compounding);
         const monthly = sanitizeNumber(monthlyInvestment, 0, 1e9, 0);
         const P = monthly * (12 / periodsPerYear);
-        const yearsSafe = sanitizeNumber(years, 0, 50, 0);
+        const yearsSafe = sanitizeNumber(years, 0, 100, 0);
         const n = Math.round(yearsSafe * periodsPerYear);
         const investedAmount = monthly * yearsSafe * 12;
 
@@ -717,7 +815,7 @@
       function calculateLumpSum(investmentAmount, annualRatePercent, years, compounding) {
         const { periodsPerYear } = getCompoundingConfig(compounding);
         const P = sanitizeNumber(investmentAmount, 0, 1e12, 0);
-        const yearsSafe = sanitizeNumber(years, 0, 50, 0);
+        const yearsSafe = sanitizeNumber(years, 0, 100, 0);
         const n = yearsSafe * periodsPerYear;
         const r = getNominalPeriodicRate(annualRatePercent, periodsPerYear);
         const totalValue = n <= 0 || r === 0 ? P : P * Math.pow(1 + r, n);
@@ -771,18 +869,149 @@
         return runSWPSimulation(corpus, monthlyWithdrawal, annualReturnPercent, annualIncreasePercent, years, compounding);
       }
 
+      // ---------- Timeline projections (yearly) ----------
+      function buildYearLabels(years) {
+        const labels = ['Year'];
+        for (let y = 1; y <= years; y++) labels.push(String(y));
+        return labels;
+      }
+
+      function projectSIPTimeline(monthlyInvestment, annualRatePercent, years, compounding) {
+        const yearsSafe = sanitizeNumber(years, 0, 100, 0);
+        const invested = [0];
+        const total = [0];
+        const returns = [0];
+        for (let y = 1; y <= yearsSafe; y++) {
+          const r = calculateSIP(monthlyInvestment, annualRatePercent, y, compounding);
+          invested.push(r.investedAmount);
+          total.push(r.totalValue);
+          returns.push(r.estimatedReturns);
+        }
+        return { labels: buildYearLabels(yearsSafe), invested, total, returns };
+      }
+
+      function projectLumpSumTimeline(investmentAmount, annualRatePercent, years, compounding) {
+        const yearsSafe = sanitizeNumber(years, 0, 100, 0);
+        const P = sanitizeNumber(investmentAmount, 0, 1e12, 0);
+        const invested = [P];
+        const total = [P];
+        const returns = [0];
+        for (let y = 1; y <= yearsSafe; y++) {
+          const r = calculateLumpSum(P, annualRatePercent, y, compounding);
+          invested.push(P);
+          total.push(r.totalValue);
+          returns.push(r.estimatedReturns);
+        }
+        return { labels: buildYearLabels(yearsSafe), invested, total, returns };
+      }
+
+      function projectSWPTimeline(corpus, monthlyWithdrawal, annualReturnPercent, annualIncreasePercent, years, compounding) {
+        const { periodsPerYear } = getCompoundingConfig(compounding);
+        const annualIncr = annualIncreasePercent / 100;
+        const yearsSafe = sanitizeNumber(years, 0, 100, 0);
+        const totalMonths = Math.round(yearsSafe * 12);
+        const monthsPerCompound = 12 / periodsPerYear;
+        const growthRate = compounding === 'monthly' ? getEffectivePeriodicRate(annualReturnPercent, 12) : getEffectivePeriodicRate(annualReturnPercent, periodsPerYear);
+
+        let balance = sanitizeNumber(corpus, 0, 1e12, 0);
+        let withdraw = sanitizeNumber(monthlyWithdrawal, 0, 1e9, 0);
+        let totalWithdrawn = 0;
+        let monthsSinceCompound = 0;
+
+        const corpusSeries = [balance];
+        const withdrawnSeries = [0];
+
+        for (let m = 1; m <= totalMonths; m++) {
+          if (m > 1 && (m - 1) % 12 === 0) withdraw *= 1 + annualIncr;
+
+          monthsSinceCompound += 1;
+          if (compounding === 'monthly') {
+            balance *= 1 + growthRate;
+          } else if (monthsSinceCompound >= monthsPerCompound) {
+            balance *= 1 + growthRate;
+            monthsSinceCompound = 0;
+          }
+
+          const actualWithdraw = Math.min(withdraw, Math.max(0, balance));
+          balance -= actualWithdraw;
+          totalWithdrawn += actualWithdraw;
+
+          if (m % 12 === 0 || m === totalMonths) {
+            corpusSeries.push(Math.max(0, balance));
+            withdrawnSeries.push(totalWithdrawn);
+          }
+
+          if (balance <= 0 || actualWithdraw < withdraw - 0.01) break;
+        }
+
+        while (corpusSeries.length < yearsSafe + 1) {
+          corpusSeries.push(corpusSeries[corpusSeries.length - 1] ?? 0);
+          withdrawnSeries.push(totalWithdrawn);
+        }
+
+        return { labels: buildYearLabels(yearsSafe), corpus: corpusSeries, withdrawn: withdrawnSeries };
+      }
+
+      function projectInterestTimeline(principal, annualRatePercent, years, interestType, compounding) {
+        const yearsSafe = sanitizeNumber(years, 0, 100, 0);
+        const P = sanitizeNumber(principal, 0, 1e12, 0);
+        const invested = [P];
+        const total = [P];
+        const returns = [0];
+        for (let y = 1; y <= yearsSafe; y++) {
+          const r = calculateInterest(P, annualRatePercent, y, interestType, compounding);
+          invested.push(r.principal);
+          total.push(r.totalAmount);
+          returns.push(r.interest);
+        }
+        return { labels: buildYearLabels(yearsSafe), invested, total, returns };
+      }
+
       // ---------- Chart.js ----------
       let sipChart = null;
       let lumpChart = null;
       let swpChart = null;
       let interestChart = null;
+      let sipLineChart = null;
+      let lumpLineChart = null;
+      let swpLineChart = null;
+      let interestLineChart = null;
+      const chartViewModes = { sip: 'pie', lumpsum: 'pie', swp: 'pie', interest: 'pie' };
+      const lastTimeline = { sip: null, lumpsum: null, swp: null, interest: null };
 
       const NIGHT_CHART = {
         invested: '#243329',
         investedHover: '#2f3f38',
         border: '#0a0f0e',
-        legend: '#8fa89f',
+        legend: '#cbd5e1',
+        legendMuted: '#8fa89f',
       };
+
+      const CHART_LABELS = {
+        investment: {
+          invested: 'Invested amount',
+          total: 'Total value',
+          gains: 'Wealth gained',
+          donut: ['Invested amount', 'Wealth gained'],
+        },
+        swp: {
+          remaining: 'Remaining corpus',
+          withdrawn: 'Total withdrawn',
+          donut: ['Total withdrawn', 'Remaining corpus'],
+        },
+        interest: {
+          principal: 'Principal',
+          total: 'Total amount',
+          gains: 'Interest earned',
+          donut: ['Principal', 'Interest earned'],
+        },
+      };
+
+      function getChartLabelSet(variant) {
+        if (variant === 'swp') return CHART_LABELS.swp;
+        if (variant === 'interest') return CHART_LABELS.interest;
+        return CHART_LABELS.investment;
+      }
 
       function getChartPalette(variant) {
         const isDark = document.documentElement.classList.contains('dark');
@@ -794,6 +1023,7 @@
             segmentBHover: isDark ? '#7eb3f7' : '#3b82f6',
             border: isDark ? NIGHT_CHART.border : '#ffffff',
             text: isDark ? NIGHT_CHART.legend : '#475569',
+            tick: isDark ? NIGHT_CHART.legendMuted : '#64748b',
           };
         }
         if (variant === 'swp') {
@@ -804,6 +1034,7 @@
             segmentBHover: isDark ? '#c4b5fd' : '#8b5cf6',
             border: isDark ? NIGHT_CHART.border : '#ffffff',
             text: isDark ? NIGHT_CHART.legend : '#475569',
+            tick: isDark ? NIGHT_CHART.legendMuted : '#64748b',
           };
         }
         if (variant === 'interest') {
@@ -814,6 +1045,7 @@
             segmentBHover: isDark ? '#fcd34d' : '#d97706',
             border: isDark ? NIGHT_CHART.border : '#ffffff',
             text: isDark ? NIGHT_CHART.legend : '#475569',
+            tick: isDark ? NIGHT_CHART.legendMuted : '#64748b',
           };
         }
         return {
@@ -823,10 +1055,12 @@
           segmentBHover: isDark ? '#34d399' : '#00d09c',
           border: isDark ? NIGHT_CHART.border : '#ffffff',
           text: isDark ? NIGHT_CHART.legend : '#475569',
+          tick: isDark ? NIGHT_CHART.legendMuted : '#64748b',
         };
       }
 
-      function createDonutChart(canvasId, variant, segmentA, segmentB, existingChart, labels = ['Invested amount', 'Wealth gained'], quickUpdate = false) {
+      function createDonutChart(canvasId, variant, segmentA, segmentB, existingChart, labels, quickUpdate = false) {
+        if (!labels) labels = getChartLabelSet(variant).donut;
         const canvas = document.getElementById(canvasId);
         if (!canvas || typeof Chart === 'undefined') return null;
 
@@ -892,11 +1126,239 @@
         return new Chart(canvas, { type: 'doughnut', data, options });
       }
 
+      function getLineChartLabels(variant) {
+        const L = getChartLabelSet(variant);
+        if (variant === 'swp') return { a: L.remaining, b: L.withdrawn };
+        if (variant === 'interest') return { a: L.principal, b: L.total, c: L.gains };
+        return { a: L.invested, b: L.total, c: L.gains };
+      }
+
+      function legendLineSwatch(color, borderWidth, borderDash = []) {
+        const w = 36;
+        const h = 12;
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        const y = h / 2;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = borderWidth;
+        ctx.lineCap = 'round';
+        ctx.setLineDash(borderDash);
+        ctx.beginPath();
+        ctx.moveTo(2, y);
+        ctx.lineTo(w - 2, y);
+        ctx.stroke();
+        return canvas;
+      }
+
+      function lineLegendLabels(chart) {
+        const fontColor = chart.legend.options.labels.color;
+        return chart._getSortedDatasetMetas().map((meta) => {
+          const ds = chart.data.datasets[meta.index];
+          const color = ds.borderColor;
+          const width = ds.borderWidth || 2;
+          const dash = ds.borderDash || [];
+          return {
+            text: ds.label,
+            hidden: !meta.visible,
+            datasetIndex: meta.index,
+            fontColor,
+            pointStyle: legendLineSwatch(color, width, dash),
+            strokeStyle: color,
+            fillStyle: 'transparent',
+          };
+        });
+      }
+
+      function createLineChart(canvasId, variant, timeline, existingChart, quickUpdate = false) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas || typeof Chart === 'undefined' || !timeline) return existingChart;
+
+        const palette = getChartPalette(variant);
+        const isDark = document.documentElement.classList.contains('dark');
+        const gridColor = isDark ? '#243329' : '#e2e8f0';
+        const tickColor = palette.tick;
+        const lineGrey = isDark ? '#b8c4d0' : '#94a3b8';
+        const labels = getLineChartLabels(variant);
+        const animDuration = prefersReducedMotion ? 0 : quickUpdate ? 0 : 500;
+        const areaFill = {
+          sip: isDark ? 'rgba(91, 156, 245, 0.12)' : 'rgba(37, 99, 235, 0.08)',
+          lump: isDark ? 'rgba(0, 208, 156, 0.12)' : 'rgba(0, 179, 134, 0.08)',
+          swp: isDark ? 'rgba(167, 139, 250, 0.12)' : 'rgba(124, 58, 237, 0.08)',
+          interest: isDark ? 'rgba(251, 191, 36, 0.12)' : 'rgba(245, 158, 11, 0.08)',
+        };
+        const datasets =
+          variant === 'swp'
+            ? [
+                {
+                  label: labels.a,
+                  data: timeline.corpus,
+                  borderColor: palette.segmentB,
+                  backgroundColor: areaFill.swp,
+                  fill: true,
+                  tension: 0.3,
+                  pointRadius: 0,
+                  pointHoverRadius: 4,
+                  borderWidth: 2,
+                },
+                {
+                  label: labels.b,
+                  data: timeline.withdrawn,
+                  borderColor: lineGrey,
+                  backgroundColor: 'transparent',
+                  tension: 0.3,
+                  pointRadius: 0,
+                  pointHoverRadius: 4,
+                  borderWidth: 2,
+                },
+              ]
+            : [
+                {
+                  label: labels.a,
+                  data: timeline.invested,
+                  borderColor: lineGrey,
+                  backgroundColor: 'transparent',
+                  tension: 0.25,
+                  pointRadius: 0,
+                  pointHoverRadius: 4,
+                  borderWidth: 2,
+                },
+                {
+                  label: labels.b,
+                  data: timeline.total,
+                  borderColor: palette.segmentB,
+                  backgroundColor: areaFill[variant] || areaFill.lump,
+                  fill: true,
+                  tension: 0.25,
+                  pointRadius: 0,
+                  pointHoverRadius: 4,
+                  borderWidth: 2,
+                },
+                {
+                  label: labels.c,
+                  data: timeline.returns,
+                  borderColor: palette.segmentB,
+                  borderDash: [6, 4],
+                  backgroundColor: 'transparent',
+                  tension: 0.25,
+                  pointRadius: 0,
+                  pointHoverRadius: 4,
+                  borderWidth: 2,
+                },
+              ];
+
+        const data = { labels: timeline.labels, datasets };
+        const options = {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          animation: { duration: animDuration },
+          scales: {
+            x: {
+              grid: { color: gridColor },
+              ticks: { color: tickColor, font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
+            },
+            y: {
+              grid: { color: gridColor },
+              ticks: {
+                color: tickColor,
+                font: { size: 10 },
+                callback: (v) => formatCurrencyCompact(v),
+                maxTicksLimit: 6,
+              },
+            },
+          },
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: palette.text,
+                padding: 14,
+                font: { size: 11, weight: '500' },
+                usePointStyle: true,
+                pointStyleWidth: 36,
+                boxWidth: 0,
+                boxHeight: 0,
+                generateLabels: lineLegendLabels,
+              },
+            },
+            tooltip: {
+              backgroundColor: isDark ? '#1e293b' : '#0f172a',
+              titleColor: '#f8fafc',
+              bodyColor: '#e2e8f0',
+              padding: 12,
+              callbacks: {
+                label: (ctx) => `${ctx.dataset.label}: ${formatCurrency(ctx.raw)}`,
+              },
+            },
+          },
+        };
+
+        if (existingChart) {
+          existingChart.data = data;
+          existingChart.options = options;
+          existingChart.update(quickUpdate || prefersReducedMotion ? 'none' : 'default');
+          return existingChart;
+        }
+        return new Chart(canvas, { type: 'line', data, options });
+      }
+
+      function refreshLineChart(calc, quick = false) {
+        const timeline = lastTimeline[calc];
+        if (!timeline) return;
+        if (calc === 'sip') sipLineChart = createLineChart('sip-line-chart', 'sip', timeline, sipLineChart, quick);
+        else if (calc === 'lumpsum') lumpLineChart = createLineChart('lump-line-chart', 'lump', timeline, lumpLineChart, quick);
+        else if (calc === 'swp') swpLineChart = createLineChart('swp-line-chart', 'swp', timeline, swpLineChart, quick);
+        else if (calc === 'interest') interestLineChart = createLineChart('int-line-chart', 'interest', timeline, interestLineChart, quick);
+      }
+
+      function setChartView(calc, view) {
+        chartViewModes[calc] = view;
+        document.querySelectorAll(`.chart-view-btn[data-calc="${calc}"]`).forEach((btn) => {
+          btn.setAttribute('aria-pressed', btn.dataset.view === view ? 'true' : 'false');
+        });
+        document.querySelectorAll(`.chart-panel[data-calc="${calc}"]`).forEach((panel) => {
+          const show = panel.dataset.view === view;
+          panel.classList.toggle('hidden', !show);
+        });
+        requestAnimationFrame(() => {
+          if (view === 'line') refreshLineChart(calc);
+          else resizeChartsForTab(calc);
+        });
+      }
+
+      function bindChartViewToggles() {
+        document.querySelectorAll('.chart-view-btn').forEach((btn) => {
+          btn.addEventListener('click', () => setChartView(btn.dataset.calc, btn.dataset.view));
+        });
+      }
+
+      function updateCalcCharts(calc, pieArgs, timeline, quick = false) {
+        lastTimeline[calc] = timeline;
+        const pieCanvas = { sip: 'sip-pie-chart', lumpsum: 'lump-pie-chart', swp: 'swp-pie-chart', interest: 'int-pie-chart' };
+
+        if (calc === 'sip') {
+          sipChart = createDonutChart(pieCanvas.sip, 'sip', pieArgs[0], pieArgs[1], sipChart, pieArgs[2], quick);
+        } else if (calc === 'lumpsum') {
+          lumpChart = createDonutChart(pieCanvas.lumpsum, 'lump', pieArgs[0], pieArgs[1], lumpChart, pieArgs[2], quick);
+        } else if (calc === 'swp') {
+          swpChart = createDonutChart(pieCanvas.swp, 'swp', pieArgs[0], pieArgs[1], swpChart, pieArgs[2], quick);
+        } else if (calc === 'interest') {
+          interestChart = createDonutChart(pieCanvas.interest, 'interest', pieArgs[0], pieArgs[1], interestChart, pieArgs[2], quick);
+        }
+        if (chartViewModes[calc] === 'line') refreshLineChart(calc, quick);
+      }
+
       function updateChartsTheme() {
         if (sipChart) createDonutChart('sip-pie-chart', 'sip', sipChart.data.datasets[0].data[0], sipChart.data.datasets[0].data[1], sipChart, sipChart.data.labels);
         if (lumpChart) createDonutChart('lump-pie-chart', 'lump', lumpChart.data.datasets[0].data[0], lumpChart.data.datasets[0].data[1], lumpChart, lumpChart.data.labels);
         if (swpChart) createDonutChart('swp-pie-chart', 'swp', swpChart.data.datasets[0].data[0], swpChart.data.datasets[0].data[1], swpChart, swpChart.data.labels);
         if (interestChart) createDonutChart('int-pie-chart', 'interest', interestChart.data.datasets[0].data[0], interestChart.data.datasets[0].data[1], interestChart, interestChart.data.labels);
+        if (chartViewModes.sip === 'line' && lastTimeline.sip) refreshLineChart('sip');
+        if (chartViewModes.lumpsum === 'line' && lastTimeline.lumpsum) refreshLineChart('lumpsum');
+        if (chartViewModes.swp === 'line' && lastTimeline.swp) refreshLineChart('swp');
+        if (chartViewModes.interest === 'line' && lastTimeline.interest) refreshLineChart('interest');
       }
 
       function getCompoundingValue(groupName) {
@@ -915,7 +1377,7 @@
       // ---------- calculateInterest ----------
       function calculateInterest(principal, annualRatePercent, years, interestType, compounding) {
         const P = sanitizeNumber(principal, 0, 1e12, 0);
-        const yearsSafe = sanitizeNumber(years, 0, 50, 0);
+        const yearsSafe = sanitizeNumber(years, 0, 100, 0);
         const rate = sanitizeNumber(annualRatePercent, 0, 100, 0);
 
         if (interestType === 'simple') {
@@ -997,72 +1459,68 @@
 
       // ---------- Recalculate ----------
       function recalcSIP(quick = false) {
-        const result = calculateSIP(
-          +document.getElementById('sip-monthly-num').value,
-          +document.getElementById('sip-return-num').value,
-          +document.getElementById('sip-years-num').value,
-          getCompoundingValue('sip-compounding')
-        );
+        const monthly = +document.getElementById('sip-monthly-num').value;
+        const rate = +document.getElementById('sip-return-num').value;
+        const years = +document.getElementById('sip-years-num').value;
+        const compounding = getCompoundingValue('sip-compounding');
+        const result = calculateSIP(monthly, rate, years, compounding);
         document.getElementById('sip-total').textContent = formatCurrency(result.totalValue);
         document.getElementById('sip-invested').textContent = formatCurrency(result.investedAmount);
         document.getElementById('sip-returns').textContent = formatCurrency(result.estimatedReturns);
-        sipChart = createDonutChart('sip-pie-chart', 'sip', result.investedAmount, result.estimatedReturns, sipChart, undefined, quick);
+        updateCalcCharts('sip', [result.investedAmount, result.estimatedReturns], projectSIPTimeline(monthly, rate, years, compounding), quick);
       }
 
       function recalcLumpSum(quick = false) {
-        const result = calculateLumpSum(
-          +document.getElementById('lump-amount-num').value,
-          +document.getElementById('lump-return-num').value,
-          +document.getElementById('lump-years-num').value,
-          getCompoundingValue('lump-compounding')
-        );
+        const amount = +document.getElementById('lump-amount-num').value;
+        const rate = +document.getElementById('lump-return-num').value;
+        const years = +document.getElementById('lump-years-num').value;
+        const compounding = getCompoundingValue('lump-compounding');
+        const result = calculateLumpSum(amount, rate, years, compounding);
         document.getElementById('lump-total').textContent = formatCurrency(result.totalValue);
         document.getElementById('lump-invested').textContent = formatCurrency(result.investedAmount);
         document.getElementById('lump-returns').textContent = formatCurrency(result.estimatedReturns);
-        lumpChart = createDonutChart('lump-pie-chart', 'lump', result.investedAmount, result.estimatedReturns, lumpChart, undefined, quick);
+        updateCalcCharts('lumpsum', [result.investedAmount, result.estimatedReturns], projectLumpSumTimeline(amount, rate, years, compounding), quick);
       }
 
       function recalcSWP(quick = false) {
-        const result = calculateSWP(
-          +document.getElementById('swp-corpus-num').value,
-          +document.getElementById('swp-withdraw-num').value,
-          +document.getElementById('swp-return-num').value,
-          +document.getElementById('swp-increase-num').value,
-          +document.getElementById('swp-years-num').value,
-          getCompoundingValue('swp-compounding')
-        );
+        const corpus = +document.getElementById('swp-corpus-num').value;
+        const withdraw = +document.getElementById('swp-withdraw-num').value;
+        const rate = +document.getElementById('swp-return-num').value;
+        const increase = +document.getElementById('swp-increase-num').value;
+        const years = +document.getElementById('swp-years-num').value;
+        const compounding = getCompoundingValue('swp-compounding');
+        const result = calculateSWP(corpus, withdraw, rate, increase, years, compounding);
 
         document.getElementById('swp-remaining-hero').textContent = formatCurrency(result.remainingCorpus);
-        document.getElementById('swp-initial').textContent = formatCurrency(+document.getElementById('swp-corpus-num').value);
+        document.getElementById('swp-initial').textContent = formatCurrency(corpus);
         document.getElementById('swp-total-withdrawn').textContent = formatCurrency(result.totalWithdrawn);
         document.getElementById('swp-total-value').textContent = formatCurrency(result.remainingCorpus + result.totalWithdrawn);
         document.getElementById('swp-ending-withdrawal').textContent = formatCurrency(result.endingMonthlyWithdrawal);
-        swpChart = createDonutChart('swp-pie-chart', 'swp', result.totalWithdrawn, result.remainingCorpus, swpChart, ['Total withdrawn', 'Remaining corpus'], quick);
+        updateCalcCharts('swp', [result.totalWithdrawn, result.remainingCorpus, CHART_LABELS.swp.donut], projectSWPTimeline(corpus, withdraw, rate, increase, years, compounding), quick);
       }
 
       function recalcInterest(quick = false) {
-        const result = calculateInterest(
-          +document.getElementById('int-principal-num').value,
-          +document.getElementById('int-rate-num').value,
-          +document.getElementById('int-years-num').value,
-          getInterestType(),
-          getCompoundingValue('interest-compounding')
-        );
+        const principal = +document.getElementById('int-principal-num').value;
+        const rate = +document.getElementById('int-rate-num').value;
+        const years = +document.getElementById('int-years-num').value;
+        const interestType = getInterestType();
+        const compounding = getCompoundingValue('interest-compounding');
+        const result = calculateInterest(principal, rate, years, interestType, compounding);
         document.getElementById('int-total').textContent = formatCurrency(result.totalAmount);
         document.getElementById('int-principal').textContent = formatCurrency(result.principal);
         document.getElementById('int-interest').textContent = formatCurrency(result.interest);
-        interestChart = createDonutChart('int-pie-chart', 'interest', result.principal, result.interest, interestChart, ['Principal', 'Interest earned'], quick);
+        updateCalcCharts('interest', [result.principal, result.interest, CHART_LABELS.interest.donut], projectInterestTimeline(principal, rate, years, interestType, compounding), quick);
       }
 
       // ---------- Init inputs ----------
       suppressRecalc = true;
       bindDualInput('sip-monthly-num', 'sip-monthly-range', 'sip-monthly', recalcSIP, 0, 1000000);
       bindDualInput('sip-return-num', 'sip-return-range', 'sip-return', recalcSIP, 0, 24);
-      bindDualInput('sip-years-num', 'sip-years-range', 'sip-years', recalcSIP, 0, 50);
+      bindDualInput('sip-years-num', 'sip-years-range', 'sip-years', recalcSIP, 0, 100);
 
       bindDualInput('lump-amount-num', 'lump-amount-range', 'lump-amount', recalcLumpSum, 0, 10000000);
       bindDualInput('lump-return-num', 'lump-return-range', 'lump-return', recalcLumpSum, 0, 24);
-      bindDualInput('lump-years-num', 'lump-years-range', 'lump-years', recalcLumpSum, 0, 50);
+      bindDualInput('lump-years-num', 'lump-years-range', 'lump-years', recalcLumpSum, 0, 100);
 
       bindDualInput('swp-corpus-num', 'swp-corpus-range', 'swp-corpus', recalcSWP, 0, 50000000);
       bindDualInput('swp-withdraw-num', 'swp-withdraw-range', 'swp-withdraw', recalcSWP, 0, 500000);
@@ -1083,10 +1541,11 @@
       });
 
       bindDualInput('int-principal-num', 'int-principal-range', 'int-principal', recalcInterest, 0, 10000000);
-      bindDualInput('int-rate-num', 'int-rate-range', 'int-rate', recalcInterest, 0, 30);
-      bindDualInput('int-years-num', 'int-years-range', 'int-years', recalcInterest, 0, 50);
+      bindDualInput('int-rate-num', 'int-rate-range', 'int-rate', recalcInterest, 0, 36);
+      bindDualInput('int-years-num', 'int-years-range', 'int-years', recalcInterest, 0, 100);
 
       updateInterestCompoundingVisibility();
+      bindChartViewToggles();
 
       const initialTab = resolveTabFromHash() || localStorage.getItem('mf-calc-tab') || 'sip';
       const activeTab = TAB_ORDER.includes(initialTab) ? initialTab : 'sip';

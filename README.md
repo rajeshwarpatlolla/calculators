@@ -4,20 +4,43 @@ A single-page web app for common Indian personal-finance calculations: **SIP**, 
 
 ## Features
 
-- **SIP** — monthly investment, expected return, tenure, compounding frequency (monthly / quarterly / annual)
-- **Lumpsum** — one-time investment with the same inputs
-- **SWP** — initial corpus, monthly withdrawal, annual withdrawal step-up, duration, compounding frequency
-- **Interest** — simple or compound interest with optional compounding frequency
+### Calculators
 
-Shared behaviour across calculators:
+- **SIP** — monthly investment, expected return, tenure (up to 100 years), compounding frequency
+- **Lumpsum** — one-time investment with the same inputs (tenure up to 100 years)
+- **SWP** — initial corpus (up to ₹5 Cr), monthly withdrawal, annual withdrawal step-up, duration (up to 100 years), compounding frequency
+- **Interest** — simple or compound interest; principal, rate (up to 36% p.a.), tenure (up to 100 years)
 
-- Sliders and number inputs kept in sync
+### Charts
+
+Each calculator includes a **Breakdown** (donut) chart by default and an optional **Timeline** (line) chart:
+
+| Calculator    | Breakdown                          | Timeline lines                                |
+| ------------- | ---------------------------------- | --------------------------------------------- |
+| SIP / Lumpsum | Invested amount · Wealth gained    | Invested amount · Total value · Wealth gained |
+| SWP           | Total withdrawn · Remaining corpus | Remaining corpus · Total withdrawn            |
+| Interest      | Principal · Interest earned        | Principal · Total amount · Interest earned    |
+
+Timeline charts use yearly data points (`Year`, `1`, `2`, … on the x-axis). Y-axis labels use compact Indian units (`₹2.5Cr`, `₹12L`, `₹50K`) while tooltips show full Indian-formatted amounts.
+
+### Shared behaviour
+
+- Sliders and number inputs kept in sync (minimum **0** on all fields; defaults unchanged)
 - **Indian numbering** for currency (e.g. `₹10,00,000`)
-- Donut charts for invested vs returns breakdown (Chart.js)
-- **Light / dark mode** with system preference on first visit; choice saved in `localStorage`
-- **Tab persistence** via `localStorage` and URL hash (e.g. `#swp`)
+- **Light / dark mode** (midnight teal theme) with system preference on first visit; choice saved in `localStorage`
+- **Tab persistence** via `localStorage` and URL hash (e.g. `#swp`, `#interest`)
 - Keyboard navigation for tabs (arrow keys, Home, End)
-- Responsive layout for mobile and desktop
+- Debounced recalculation while dragging sliders
+- Lazy chart init per tab; responsive layout for mobile and desktop
+
+## Default values
+
+| Field            | SIP        | Lumpsum   | SWP                                      | Interest        |
+| ---------------- | ---------- | --------- | ---------------------------------------- | --------------- |
+| Amount / corpus  | ₹10,000/mo | ₹1,00,000 | ₹10,00,000                               | ₹1,00,000       |
+| Return / rate    | 12%        | 12%       | 10%                                      | 8%              |
+| Years / duration | 10         | 10        | 10                                       | 5               |
+| Other            | —          | —         | ₹10,000/mo withdrawal, 5% annual step-up | Simple interest |
 
 ## Quick start
 
