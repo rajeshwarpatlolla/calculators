@@ -251,6 +251,14 @@
               <input type="range" id="sip-return-range" class="range-sip w-full" min="0" max="24" step="0.5" value="12" />
             </div>
 
+            <div class="mb-5" data-field="sip-stepup">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="sip-stepup-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Annual step-up (%)</label>
+                <input type="number" id="sip-stepup-num" class="value-input" min="0" max="10" step="1" value="0" />
+              </div>
+              <input type="range" id="sip-stepup-range" class="range-sip w-full" min="0" max="10" step="1" value="0" />
+            </div>
+
             <div data-field="sip-years">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="sip-years-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Time period (years)</label>
@@ -786,7 +794,51 @@
       }
 
       // ---------- calculateSIP: monthly = annuity due (effective); less frequent = ordinary ----------
-      function calculateSIP(monthlyInvestment, annualRatePercent, years, compounding) {
+      function runSIPSimulation(monthlyInvestment, annualRatePercent, annualStepUpPercent, years, compounding) {
+        const { periodsPerYear } = getCompoundingConfig(compounding);
+        const annualStepUp = sanitizeNumber(annualStepUpPercent, 0, 10, 0) / 100;
+        const yearsSafe = sanitizeNumber(years, 0, 100, 0);
+        const totalMonths = Math.round(yearsSafe * 12);
+        const monthsPerCompound = 12 / periodsPerYear;
+        const growthRate = compounding === 'monthly' ? getEffectivePeriodicRate(annualRatePercent, 12) : getEffectivePeriodicRate(annualRatePercent, periodsPerYear);
+
+        let monthly = sanitizeNumber(monthlyInvestment, 0, 1e9, 0);
+        let balance = 0;
+        let totalInvested = 0;
+        let monthsSinceCompound = 0;
+
+        for (let m = 1; m <= totalMonths; m++) {
+          if (m > 1 && (m - 1) % 12 === 0) monthly *= 1 + annualStepUp;
+
+          if (compounding === 'monthly') {
+            balance += monthly;
+            if (growthRate > 0) balance *= 1 + growthRate;
+          } else {
+            balance += monthly;
+            monthsSinceCompound += 1;
+            if (monthsSinceCompound >= monthsPerCompound) {
+              if (growthRate > 0) balance *= 1 + growthRate;
+              monthsSinceCompound = 0;
+            }
+          }
+          totalInvested += monthly;
+        }
+
+        if (compounding !== 'monthly' && monthsSinceCompound > 0 && growthRate > 0) {
+          balance *= 1 + growthRate;
+        }
+
+        return {
+          investedAmount: totalInvested,
+          estimatedReturns: Math.max(0, balance - totalInvested),
+          totalValue: Math.max(0, balance),
+        };
+      }
+
+      function calculateSIP(monthlyInvestment, annualRatePercent, years, compounding, annualStepUpPercent = 0) {
+        const stepUp = sanitizeNumber(annualStepUpPercent, 0, 10, 0);
+        if (stepUp > 0) return runSIPSimulation(monthlyInvestment, annualRatePercent, stepUp, years, compounding);
+
         const { periodsPerYear } = getCompoundingConfig(compounding);
         const monthly = sanitizeNumber(monthlyInvestment, 0, 1e9, 0);
         const P = monthly * (12 / periodsPerYear);
@@ -878,13 +930,13 @@
         return labels;
       }
 
-      function projectSIPTimeline(monthlyInvestment, annualRatePercent, years, compounding) {
+      function projectSIPTimeline(monthlyInvestment, annualRatePercent, years, compounding, annualStepUpPercent = 0) {
         const yearsSafe = sanitizeNumber(years, 0, 100, 0);
         const invested = [0];
         const total = [0];
         const returns = [0];
         for (let y = 1; y <= yearsSafe; y++) {
-          const r = calculateSIP(monthlyInvestment, annualRatePercent, y, compounding);
+          const r = calculateSIP(monthlyInvestment, annualRatePercent, y, compounding, annualStepUpPercent);
           invested.push(r.investedAmount);
           total.push(r.totalValue);
           returns.push(r.estimatedReturns);
@@ -1481,13 +1533,14 @@
       function recalcSIP(quick = false) {
         const monthly = +document.getElementById('sip-monthly-num').value;
         const rate = +document.getElementById('sip-return-num').value;
+        const stepUp = +document.getElementById('sip-stepup-num').value;
         const years = +document.getElementById('sip-years-num').value;
         const compounding = getCompoundingValue('sip-compounding');
-        const result = calculateSIP(monthly, rate, years, compounding);
+        const result = calculateSIP(monthly, rate, years, compounding, stepUp);
         document.getElementById('sip-total').textContent = formatCurrency(result.totalValue);
         document.getElementById('sip-invested').textContent = formatCurrency(result.investedAmount);
         document.getElementById('sip-returns').textContent = formatCurrency(result.estimatedReturns);
-        updateCalcCharts('sip', [result.investedAmount, result.estimatedReturns], projectSIPTimeline(monthly, rate, years, compounding), quick);
+        updateCalcCharts('sip', [result.investedAmount, result.estimatedReturns], projectSIPTimeline(monthly, rate, years, compounding, stepUp), quick);
       }
 
       function recalcLumpSum(quick = false) {
@@ -1536,6 +1589,7 @@
       suppressRecalc = true;
       bindDualInput('sip-monthly-num', 'sip-monthly-range', 'sip-monthly', recalcSIP, 0, 1000000);
       bindDualInput('sip-return-num', 'sip-return-range', 'sip-return', recalcSIP, 0, 24);
+      bindDualInput('sip-stepup-num', 'sip-stepup-range', 'sip-stepup', recalcSIP, 0, 10);
       bindDualInput('sip-years-num', 'sip-years-range', 'sip-years', recalcSIP, 0, 100);
 
       bindDualInput('lump-amount-num', 'lump-amount-range', 'lump-amount', recalcLumpSum, 0, 10000000);
