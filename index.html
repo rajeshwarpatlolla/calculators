@@ -94,7 +94,10 @@
         }
       }
       input.value-input {
-        @apply w-28 shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-right font-mono text-sm font-semibold dark:border-night-border dark:bg-night-input;
+        @apply w-32 shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-right font-mono text-sm font-semibold dark:border-night-border dark:bg-night-input;
+      }
+      .inflation-rate-select {
+        @apply rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-xs font-semibold text-slate-700 dark:border-night-border dark:bg-night-input dark:text-slate-200;
       }
       .compounding-options {
         @apply mt-2 flex flex-wrap items-center gap-x-5 gap-y-2;
@@ -286,6 +289,12 @@
             <div class="mb-5 rounded-xl bg-blue-50 p-5 text-center dark:bg-blue-500/10 dark:ring-1 dark:ring-inset dark:ring-blue-500/25">
               <p class="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-night-muted">Total value</p>
               <p id="sip-total" class="mt-1 font-mono text-3xl font-bold tabular-nums" aria-live="polite" aria-atomic="true">—</p>
+              <p class="mt-2 flex flex-wrap items-center justify-center gap-x-1 gap-y-1 text-xs text-slate-500 dark:text-night-muted">
+                <span>Inflation adjusted at</span>
+                <select class="inflation-rate-select" aria-label="Inflation rate for adjustment"></select>
+                <span>%:</span>
+                <span id="sip-total-inflation" class="font-mono font-semibold text-slate-700 dark:text-slate-200">—</span>
+              </p>
             </div>
             <div class="mb-5 grid grid-cols-2 gap-3">
               <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-night-border dark:bg-night-elevated/70">
@@ -330,9 +339,9 @@
             <div class="mb-5" data-field="lump-amount">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="lump-amount-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Investment amount (₹)</label>
-                <input type="number" id="lump-amount-num" class="value-input" min="0" max="10000000" step="1000" value="100000" inputmode="numeric" />
+                <input type="number" id="lump-amount-num" class="value-input" min="0" max="10000000" step="100000" value="100000" inputmode="numeric" />
               </div>
-              <input type="range" id="lump-amount-range" class="range-lump w-full" min="0" max="10000000" step="1000" value="100000" />
+              <input type="range" id="lump-amount-range" class="range-lump w-full" min="0" max="10000000" step="100000" value="100000" />
             </div>
 
             <div class="mb-5" data-field="lump-return">
@@ -369,6 +378,12 @@
             <div class="mb-5 rounded-xl bg-emerald-50 p-5 text-center dark:bg-emerald-500/10 dark:ring-1 dark:ring-inset dark:ring-emerald-500/25">
               <p class="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-night-muted">Total value</p>
               <p id="lump-total" class="mt-1 font-mono text-3xl font-bold tabular-nums" aria-live="polite" aria-atomic="true">—</p>
+              <p class="mt-2 flex flex-wrap items-center justify-center gap-x-1 gap-y-1 text-xs text-slate-500 dark:text-night-muted">
+                <span>Inflation adjusted at</span>
+                <select class="inflation-rate-select" aria-label="Inflation rate for adjustment"></select>
+                <span>%:</span>
+                <span id="lump-total-inflation" class="font-mono font-semibold text-slate-700 dark:text-slate-200">—</span>
+              </p>
             </div>
             <div class="mb-5 grid grid-cols-2 gap-3">
               <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-night-border dark:bg-night-elevated/70">
@@ -413,9 +428,9 @@
             <div class="mb-5" data-field="swp-corpus">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="swp-corpus-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Initial corpus (₹)</label>
-                <input type="number" id="swp-corpus-num" class="value-input" min="0" max="50000000" step="100000" value="1000000" inputmode="numeric" />
+                <input type="number" id="swp-corpus-num" class="value-input" min="0" max="100000000" step="100000" value="1000000" inputmode="numeric" />
               </div>
-              <input type="range" id="swp-corpus-range" class="range-swp w-full" min="0" max="50000000" step="100000" value="1000000" />
+              <input type="range" id="swp-corpus-range" class="range-swp w-full" min="0" max="100000000" step="100000" value="1000000" />
             </div>
 
             <div class="mb-5" data-field="swp-withdraw">
@@ -468,6 +483,12 @@
             <div class="mb-5 rounded-xl bg-violet-50 p-5 text-center dark:bg-violet-500/10 dark:ring-1 dark:ring-inset dark:ring-violet-500/25">
               <p class="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-night-muted">Remaining corpus</p>
               <p id="swp-remaining-hero" class="mt-1 font-mono text-3xl font-bold tabular-nums" aria-live="polite" aria-atomic="true">—</p>
+              <p class="mt-2 flex flex-wrap items-center justify-center gap-x-1 gap-y-1 text-xs text-slate-500 dark:text-night-muted">
+                <span>Inflation adjusted at</span>
+                <select class="inflation-rate-select" aria-label="Inflation rate for adjustment"></select>
+                <span>%:</span>
+                <span id="swp-remaining-inflation" class="font-mono font-semibold text-slate-700 dark:text-slate-200">—</span>
+              </p>
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-night-border dark:bg-night-elevated/70">
@@ -528,9 +549,9 @@
             <div class="mb-5" data-field="int-principal">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="int-principal-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Principal amount (₹)</label>
-                <input type="number" id="int-principal-num" class="value-input" min="0" max="100000000" step="1000" value="100000" />
+                <input type="number" id="int-principal-num" class="value-input" min="0" max="100000000" step="10000" value="100000" />
               </div>
-              <input type="range" id="int-principal-range" class="range-interest w-full" min="0" max="10000000" step="1000" value="100000" />
+              <input type="range" id="int-principal-range" class="range-interest w-full" min="0" max="10000000" step="10000" value="100000" />
             </div>
 
             <div class="mb-5" data-field="int-rate">
@@ -567,6 +588,12 @@
             <div class="mb-5 rounded-xl bg-amber-50 p-5 text-center dark:bg-amber-500/10 dark:ring-1 dark:ring-inset dark:ring-amber-500/25">
               <p class="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-night-muted">Total amount</p>
               <p id="int-total" class="mt-1 font-mono text-3xl font-bold tabular-nums" aria-live="polite" aria-atomic="true">—</p>
+              <p class="mt-2 flex flex-wrap items-center justify-center gap-x-1 gap-y-1 text-xs text-slate-500 dark:text-night-muted">
+                <span>Inflation adjusted at</span>
+                <select class="inflation-rate-select" aria-label="Inflation rate for adjustment"></select>
+                <span>%:</span>
+                <span id="int-total-inflation" class="font-mono font-semibold text-slate-700 dark:text-slate-200">—</span>
+              </p>
             </div>
             <div class="mb-5 grid grid-cols-2 gap-3">
               <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-night-border dark:bg-night-elevated/70">
@@ -770,6 +797,59 @@
         if (abs >= 1e5) return `${sign}₹${fmtUnit(abs / 1e5)}L`;
         if (abs >= 1e3) return `${sign}₹${fmtUnit(abs / 1e3)}K`;
         return `${sign}₹${abs}`;
+      }
+
+      const DEFAULT_INFLATION_RATE_PERCENT = 7;
+
+      function getInflationRatePercent() {
+        const sel = document.querySelector('.inflation-rate-select');
+        return sel ? sanitizeNumber(sel.value, 1, 10, DEFAULT_INFLATION_RATE_PERCENT) : DEFAULT_INFLATION_RATE_PERCENT;
+      }
+
+      function inflationAdjustedValue(futureAmount, years) {
+        const amount = Number(futureAmount) || 0;
+        const y = sanitizeNumber(years, 0, 100, 0);
+        if (y <= 0) return Math.round(amount);
+        return Math.round(amount / Math.pow(1 + getInflationRatePercent() / 100, y));
+      }
+
+      const inflationAdjustedInputs = {
+        sip: { amount: 0, years: 0 },
+        lumpsum: { amount: 0, years: 0 },
+        swp: { amount: 0, years: 0 },
+        interest: { amount: 0, years: 0 },
+      };
+
+      function setInflationAdjustedInput(calc, amount, years) {
+        inflationAdjustedInputs[calc] = { amount: Number(amount) || 0, years: sanitizeNumber(years, 0, 100, 0) };
+      }
+
+      function updateInflationAdjustedDisplays() {
+        document.getElementById('sip-total-inflation').textContent = formatCurrency(inflationAdjustedValue(inflationAdjustedInputs.sip.amount, inflationAdjustedInputs.sip.years));
+        document.getElementById('lump-total-inflation').textContent = formatCurrency(inflationAdjustedValue(inflationAdjustedInputs.lumpsum.amount, inflationAdjustedInputs.lumpsum.years));
+        document.getElementById('swp-remaining-inflation').textContent = formatCurrency(inflationAdjustedValue(inflationAdjustedInputs.swp.amount, inflationAdjustedInputs.swp.years));
+        document.getElementById('int-total-inflation').textContent = formatCurrency(inflationAdjustedValue(inflationAdjustedInputs.interest.amount, inflationAdjustedInputs.interest.years));
+      }
+
+      function initInflationRateSelects() {
+        const options = Array.from({ length: 10 }, (_, i) => {
+          const value = i + 1;
+          const selected = value === DEFAULT_INFLATION_RATE_PERCENT ? ' selected' : '';
+          return `<option value="${value}"${selected}>${value}</option>`;
+        }).join('');
+
+        document.querySelectorAll('.inflation-rate-select').forEach((sel) => {
+          sel.innerHTML = options;
+        });
+
+        document.addEventListener('change', (e) => {
+          if (!e.target.matches('.inflation-rate-select')) return;
+          const rate = sanitizeNumber(e.target.value, 1, 10, DEFAULT_INFLATION_RATE_PERCENT);
+          document.querySelectorAll('.inflation-rate-select').forEach((other) => {
+            other.value = String(rate);
+          });
+          updateInflationAdjustedDisplays();
+        });
       }
 
       const COMPOUNDING = {
@@ -1538,6 +1618,8 @@
         const compounding = getCompoundingValue('sip-compounding');
         const result = calculateSIP(monthly, rate, years, compounding, stepUp);
         document.getElementById('sip-total').textContent = formatCurrency(result.totalValue);
+        setInflationAdjustedInput('sip', result.totalValue, years);
+        updateInflationAdjustedDisplays();
         document.getElementById('sip-invested').textContent = formatCurrency(result.investedAmount);
         document.getElementById('sip-returns').textContent = formatCurrency(result.estimatedReturns);
         updateCalcCharts('sip', [result.investedAmount, result.estimatedReturns], projectSIPTimeline(monthly, rate, years, compounding, stepUp), quick);
@@ -1550,6 +1632,8 @@
         const compounding = getCompoundingValue('lump-compounding');
         const result = calculateLumpSum(amount, rate, years, compounding);
         document.getElementById('lump-total').textContent = formatCurrency(result.totalValue);
+        setInflationAdjustedInput('lumpsum', result.totalValue, years);
+        updateInflationAdjustedDisplays();
         document.getElementById('lump-invested').textContent = formatCurrency(result.investedAmount);
         document.getElementById('lump-returns').textContent = formatCurrency(result.estimatedReturns);
         updateCalcCharts('lumpsum', [result.investedAmount, result.estimatedReturns], projectLumpSumTimeline(amount, rate, years, compounding), quick);
@@ -1565,6 +1649,8 @@
         const result = calculateSWP(corpus, withdraw, rate, increase, years, compounding);
 
         document.getElementById('swp-remaining-hero').textContent = formatCurrency(result.remainingCorpus);
+        setInflationAdjustedInput('swp', result.remainingCorpus, years);
+        updateInflationAdjustedDisplays();
         document.getElementById('swp-initial').textContent = formatCurrency(corpus);
         document.getElementById('swp-total-withdrawn').textContent = formatCurrency(result.totalWithdrawn);
         document.getElementById('swp-total-value').textContent = formatCurrency(result.remainingCorpus + result.totalWithdrawn);
@@ -1580,6 +1666,8 @@
         const compounding = getCompoundingValue('interest-compounding');
         const result = calculateInterest(principal, rate, years, interestType, compounding);
         document.getElementById('int-total').textContent = formatCurrency(result.totalAmount);
+        setInflationAdjustedInput('interest', result.totalAmount, years);
+        updateInflationAdjustedDisplays();
         document.getElementById('int-principal').textContent = formatCurrency(result.principal);
         document.getElementById('int-interest').textContent = formatCurrency(result.interest);
         updateCalcCharts('interest', [result.principal, result.interest, CHART_LABELS.interest.donut], projectInterestTimeline(principal, rate, years, interestType, compounding), quick);
@@ -1596,7 +1684,7 @@
       bindDualInput('lump-return-num', 'lump-return-range', 'lump-return', recalcLumpSum, 0, 24);
       bindDualInput('lump-years-num', 'lump-years-range', 'lump-years', recalcLumpSum, 0, 100);
 
-      bindDualInput('swp-corpus-num', 'swp-corpus-range', 'swp-corpus', recalcSWP, 0, 50000000);
+      bindDualInput('swp-corpus-num', 'swp-corpus-range', 'swp-corpus', recalcSWP, 0, 100000000);
       bindDualInput('swp-withdraw-num', 'swp-withdraw-range', 'swp-withdraw', recalcSWP, 0, 500000);
       bindDualInput('swp-return-num', 'swp-return-range', 'swp-return', recalcSWP, 0, 24);
       bindDualInput('swp-increase-num', 'swp-increase-range', 'swp-increase', recalcSWP, 0, 20);
@@ -1620,6 +1708,7 @@
 
       updateInterestCompoundingVisibility();
       bindChartViewToggles();
+      initInflationRateSelects();
 
       const initialTab = resolveTabFromHash() || localStorage.getItem('mf-calc-tab') || 'sip';
       const activeTab = TAB_ORDER.includes(initialTab) ? initialTab : 'sip';
