@@ -24,13 +24,13 @@
             colors: {
               brand: { DEFAULT: '#00b386', light: '#00d09c' },
               night: {
-                page: '#0a0f0e',
-                card: '#121a17',
-                elevated: '#182119',
-                input: '#0f1614',
-                border: '#243329',
-                track: '#1a2621',
-                muted: '#8fa89f',
+                page: '#0b1220',
+                card: '#141c2b',
+                elevated: '#1a2436',
+                input: '#101826',
+                border: '#2a3548',
+                track: '#1a2436',
+                muted: '#8b9bb4',
               },
             },
             animation: {
@@ -1132,11 +1132,11 @@
       const lastTimeline = { sip: null, lumpsum: null, swp: null, interest: null };
 
       const NIGHT_CHART = {
-        invested: '#243329',
-        investedHover: '#2f3f38',
-        border: '#0a0f0e',
+        invested: '#2a3548',
+        investedHover: '#364560',
+        border: '#0b1220',
         legend: '#cbd5e1',
-        legendMuted: '#8fa89f',
+        legendMuted: '#8b9bb4',
       };
 
       const CHART_LABELS = {
@@ -1329,7 +1329,7 @@
 
         const palette = getChartPalette(variant);
         const isDark = document.documentElement.classList.contains('dark');
-        const gridColor = isDark ? '#243329' : '#e2e8f0';
+        const gridColor = isDark ? '#2a3548' : '#e2e8f0';
         const tickColor = palette.tick;
         const lineGrey = isDark ? '#b8c4d0' : '#94a3b8';
         const labels = getLineChartLabels(variant);
