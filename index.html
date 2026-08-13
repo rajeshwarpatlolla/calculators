@@ -862,7 +862,7 @@
         return COMPOUNDING[freq] || COMPOUNDING.monthly;
       }
 
-      // Effective periodic rate — same CAGR regardless of compounding count (lumpsum FV identical)
+      // Effective periodic rate — same CAGR regardless of compounding count
       function getEffectivePeriodicRate(annualRatePercent, periodsPerYear) {
         const annual = sanitizeNumber(annualRatePercent, 0, 100, 0) / 100;
         return Math.pow(1 + annual, 1 / periodsPerYear) - 1;
@@ -873,39 +873,31 @@
         return sanitizeNumber(annualRatePercent, 0, 100, 0) / 100 / periodsPerYear;
       }
 
-      // ---------- calculateSIP: monthly = annuity due (effective); less frequent = ordinary ----------
-      function runSIPSimulation(monthlyInvestment, annualRatePercent, annualStepUpPercent, years, compounding) {
+      // Monthly growth rate from nominal compounding frequency (SIP contributions are monthly)
+      function getMonthlyRateFromCompounding(annualRatePercent, compounding) {
         const { periodsPerYear } = getCompoundingConfig(compounding);
+        const monthsPerCompound = 12 / periodsPerYear;
+        const periodRate = getNominalPeriodicRate(annualRatePercent, periodsPerYear);
+        if (periodRate === 0) return 0;
+        return Math.pow(1 + periodRate, 1 / monthsPerCompound) - 1;
+      }
+
+      // ---------- calculateSIP: monthly contributions, grow each month at compounding-equivalent rate ----------
+      function runSIPSimulation(monthlyInvestment, annualRatePercent, annualStepUpPercent, years, compounding) {
         const annualStepUp = sanitizeNumber(annualStepUpPercent, 0, 10, 0) / 100;
         const yearsSafe = sanitizeNumber(years, 0, 100, 0);
         const totalMonths = Math.round(yearsSafe * 12);
-        const monthsPerCompound = 12 / periodsPerYear;
-        const growthRate = compounding === 'monthly' ? getEffectivePeriodicRate(annualRatePercent, 12) : getEffectivePeriodicRate(annualRatePercent, periodsPerYear);
+        const monthlyRate = getMonthlyRateFromCompounding(annualRatePercent, compounding);
 
         let monthly = sanitizeNumber(monthlyInvestment, 0, 1e9, 0);
         let balance = 0;
         let totalInvested = 0;
-        let monthsSinceCompound = 0;
 
         for (let m = 1; m <= totalMonths; m++) {
           if (m > 1 && (m - 1) % 12 === 0) monthly *= 1 + annualStepUp;
-
-          if (compounding === 'monthly') {
-            balance += monthly;
-            if (growthRate > 0) balance *= 1 + growthRate;
-          } else {
-            balance += monthly;
-            monthsSinceCompound += 1;
-            if (monthsSinceCompound >= monthsPerCompound) {
-              if (growthRate > 0) balance *= 1 + growthRate;
-              monthsSinceCompound = 0;
-            }
-          }
+          balance += monthly;
+          if (monthlyRate > 0) balance *= 1 + monthlyRate;
           totalInvested += monthly;
-        }
-
-        if (compounding !== 'monthly' && monthsSinceCompound > 0 && growthRate > 0) {
-          balance *= 1 + growthRate;
         }
 
         return {
@@ -916,31 +908,7 @@
       }
 
       function calculateSIP(monthlyInvestment, annualRatePercent, years, compounding, annualStepUpPercent = 0) {
-        const stepUp = sanitizeNumber(annualStepUpPercent, 0, 10, 0);
-        if (stepUp > 0) return runSIPSimulation(monthlyInvestment, annualRatePercent, stepUp, years, compounding);
-
-        const { periodsPerYear } = getCompoundingConfig(compounding);
-        const monthly = sanitizeNumber(monthlyInvestment, 0, 1e9, 0);
-        const P = monthly * (12 / periodsPerYear);
-        const yearsSafe = sanitizeNumber(years, 0, 100, 0);
-        const n = Math.round(yearsSafe * periodsPerYear);
-        const investedAmount = monthly * yearsSafe * 12;
-
-        if (n <= 0) return { investedAmount, estimatedReturns: 0, totalValue: investedAmount };
-
-        const r = getEffectivePeriodicRate(annualRatePercent, periodsPerYear);
-        let totalValue = investedAmount;
-        if (r > 0) {
-          const ordinary = P * ((Math.pow(1 + r, n) - 1) / r);
-          totalValue = compounding === 'monthly' ? ordinary * (1 + r) : ordinary;
-        }
-        const estimatedReturns = totalValue - investedAmount;
-
-        return {
-          investedAmount,
-          estimatedReturns: Math.max(0, estimatedReturns),
-          totalValue: Math.max(0, totalValue),
-        };
+        return runSIPSimulation(monthlyInvestment, annualRatePercent, annualStepUpPercent, years, compounding);
       }
 
       // ---------- calculateLumpSum: FV = P × (1 + r)^n, r = nominal annual ÷ periods ----------
