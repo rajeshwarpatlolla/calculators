@@ -1,6 +1,6 @@
 # Finance Calculators
 
-A single-page web app for common Indian personal-finance calculations: **SIP**, **lumpsum**, **SWP**, and **simple/compound interest**. Built as one static HTML file with no build step.
+A single-page web app for common Indian personal-finance calculations: **SIP**, **lumpsum**, **SWP**, and **simple/compound interest**. Static HTML/CSS/JS with no build step.
 
 ## Features
 
@@ -60,18 +60,21 @@ Then visit [http://localhost:8080](http://localhost:8080).
 
 ## Tech stack
 
-| Layer          | Choice                                        |
-| -------------- | --------------------------------------------- |
-| Markup / logic | `index.html` (vanilla JavaScript)             |
-| Styling        | [Tailwind CSS](https://tailwindcss.com) (CDN) |
-| Charts         | [Chart.js](https://www.chartjs.org) 4.x (CDN) |
-| Fonts          | Inter, JetBrains Mono (Google Fonts)          |
+| Layer   | Choice                                                       |
+| ------- | ------------------------------------------------------------ |
+| Markup  | `index.html`                                                 |
+| Logic   | `app.js` (vanilla JavaScript)                                |
+| Styling | [Tailwind CSS](https://tailwindcss.com) (CDN) + `styles.css` |
+| Charts  | [Chart.js](https://www.chartjs.org) 4.x (CDN)                |
+| Fonts   | Inter, JetBrains Mono (Google Fonts)                         |
 
 ## Project structure
 
 ```
 calculators/
-├── index.html   # entire app (UI + calculations + charts)
+├── index.html   # page markup
+├── styles.css   # custom component styles
+├── app.js       # calculations, charts, UI logic
 └── README.md
 ```
 
