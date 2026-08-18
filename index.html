@@ -130,10 +130,23 @@
         <div class="grid gap-5 md:grid-cols-2">
           <!-- Inputs -->
           <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 dark:border-night-border dark:bg-night-card dark:shadow-lg dark:shadow-black/25">
-            <h2 class="mb-5 flex items-center gap-2 text-base font-semibold">
-              <span class="h-2 w-2 rounded-full bg-blue-500"></span>
-              SIP inputs
+            <h2 class="mb-5 flex items-center justify-between gap-2 text-base font-semibold">
+              <span class="flex items-center gap-2">
+                <span class="h-2 w-2 rounded-full bg-blue-500"></span>
+                SIP inputs
+              </span>
+              <span id="sip-corpus-toggle-wrap">
+                <button type="button" id="sip-corpus-toggle" class="text-xs font-medium text-blue-600 underline-offset-2 hover:underline dark:text-blue-300">Add existing investment</button>
+              </span>
             </h2>
+
+            <div class="mb-5 hidden" id="sip-corpus-wrap" data-field="sip-corpus" hidden>
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="sip-corpus-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Existing investment (₹)</label>
+                <input type="number" id="sip-corpus-num" class="value-input" min="0" max="100000000" step="100000" value="0" inputmode="numeric" />
+              </div>
+              <input type="range" id="sip-corpus-range" class="range-sip w-full" min="0" max="100000000" step="100000" value="0" />
+            </div>
 
             <div class="mb-5" data-field="sip-monthly">
               <div class="mb-2 flex items-center justify-between gap-3">
@@ -162,9 +175,9 @@
             <div data-field="sip-years">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="sip-years-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Time period (years)</label>
-                <input type="number" id="sip-years-num" class="value-input" min="0" max="100" step="1" value="10" />
+                <input type="number" id="sip-years-num" class="value-input" min="1" max="100" step="1" value="10" />
               </div>
-              <input type="range" id="sip-years-range" class="range-sip w-full" min="0" max="100" step="1" value="10" />
+              <input type="range" id="sip-years-range" class="range-sip w-full" min="1" max="100" step="1" value="10" />
             </div>
 
             <div class="mt-5">
@@ -252,9 +265,9 @@
             <div data-field="lump-years">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="lump-years-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Time period (years)</label>
-                <input type="number" id="lump-years-num" class="value-input" min="0" max="100" step="1" value="10" />
+                <input type="number" id="lump-years-num" class="value-input" min="1" max="100" step="1" value="10" />
               </div>
-              <input type="range" id="lump-years-range" class="range-lump w-full" min="0" max="100" step="1" value="10" />
+              <input type="range" id="lump-years-range" class="range-lump w-full" min="1" max="100" step="1" value="10" />
             </div>
 
             <div class="mt-5">
@@ -357,9 +370,9 @@
             <div data-field="swp-years">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="swp-years-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Duration (years)</label>
-                <input type="number" id="swp-years-num" class="value-input" min="0" max="100" step="1" value="10" />
+                <input type="number" id="swp-years-num" class="value-input" min="1" max="100" step="1" value="10" />
               </div>
-              <input type="range" id="swp-years-range" class="range-swp w-full" min="0" max="100" step="1" value="10" />
+              <input type="range" id="swp-years-range" class="range-swp w-full" min="1" max="100" step="1" value="10" />
             </div>
 
             <div class="mt-5">
@@ -462,9 +475,9 @@
             <div class="mb-5" data-field="int-years">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <label for="int-years-num" class="text-xs font-medium text-slate-500 dark:text-night-muted">Time period (years)</label>
-                <input type="number" id="int-years-num" class="value-input" min="0" max="100" step="1" value="5" />
+                <input type="number" id="int-years-num" class="value-input" min="1" max="100" step="1" value="5" />
               </div>
-              <input type="range" id="int-years-range" class="range-interest w-full" min="0" max="100" step="1" value="5" />
+              <input type="range" id="int-years-range" class="range-interest w-full" min="1" max="100" step="1" value="5" />
             </div>
 
             <div id="interest-compounding-wrap" class="hidden">

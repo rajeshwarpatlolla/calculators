@@ -283,15 +283,16 @@ function getMonthlyRateFromCompounding(annualRatePercent, compounding) {
 }
 
 // ---------- calculateSIP: monthly contributions, grow each month at compounding-equivalent rate ----------
-function runSIPSimulation(monthlyInvestment, annualRatePercent, annualStepUpPercent, years, compounding) {
+function runSIPSimulation(monthlyInvestment, annualRatePercent, annualStepUpPercent, years, compounding, existingCorpus = 0) {
   const annualStepUp = sanitizeNumber(annualStepUpPercent, 0, 50, 0) / 100;
   const yearsSafe = sanitizeNumber(years, 0, 100, 0);
   const totalMonths = Math.round(yearsSafe * 12);
   const monthlyRate = getMonthlyRateFromCompounding(annualRatePercent, compounding);
 
   let monthly = sanitizeNumber(monthlyInvestment, 0, 1e9, 0);
-  let balance = 0;
-  let totalInvested = 0;
+  const corpus = sanitizeNumber(existingCorpus, 0, 1e12, 0);
+  let balance = corpus;
+  let totalInvested = corpus;
 
   for (let m = 1; m <= totalMonths; m++) {
     if (m > 1 && (m - 1) % 12 === 0) monthly *= 1 + annualStepUp;
@@ -307,8 +308,8 @@ function runSIPSimulation(monthlyInvestment, annualRatePercent, annualStepUpPerc
   };
 }
 
-function calculateSIP(monthlyInvestment, annualRatePercent, years, compounding, annualStepUpPercent = 0) {
-  return runSIPSimulation(monthlyInvestment, annualRatePercent, annualStepUpPercent, years, compounding);
+function calculateSIP(monthlyInvestment, annualRatePercent, years, compounding, annualStepUpPercent = 0, existingCorpus = 0) {
+  return runSIPSimulation(monthlyInvestment, annualRatePercent, annualStepUpPercent, years, compounding, existingCorpus);
 }
 
 // ---------- calculateLumpSum: FV = P × (1 + r)^n, r = nominal annual ÷ periods ----------
@@ -378,13 +379,14 @@ function buildYearLabels(years) {
   return labels;
 }
 
-function projectSIPTimeline(monthlyInvestment, annualRatePercent, years, compounding, annualStepUpPercent = 0) {
+function projectSIPTimeline(monthlyInvestment, annualRatePercent, years, compounding, annualStepUpPercent = 0, existingCorpus = 0) {
   const yearsSafe = sanitizeNumber(years, 0, 100, 0);
-  const invested = [0];
-  const total = [0];
+  const corpus = sanitizeNumber(existingCorpus, 0, 1e12, 0);
+  const invested = [corpus];
+  const total = [corpus];
   const returns = [0];
   for (let y = 1; y <= yearsSafe; y++) {
-    const r = calculateSIP(monthlyInvestment, annualRatePercent, y, compounding, annualStepUpPercent);
+    const r = calculateSIP(monthlyInvestment, annualRatePercent, y, compounding, annualStepUpPercent, corpus);
     invested.push(r.investedAmount);
     total.push(r.totalValue);
     returns.push(r.estimatedReturns);
@@ -985,19 +987,40 @@ function bindDualInput(numId, rangeId, fieldKey, onUpdate, min, max) {
 }
 
 // ---------- Recalculate ----------
+function getSipExistingCorpus() {
+  const wrap = document.getElementById('sip-corpus-wrap');
+  if (!wrap || wrap.hidden) return 0;
+  return +document.getElementById('sip-corpus-num').value || 0;
+}
+
+function setSipCorpusVisible(visible) {
+  const wrap = document.getElementById('sip-corpus-wrap');
+  const toggle = document.getElementById('sip-corpus-toggle');
+  const numEl = document.getElementById('sip-corpus-num');
+  const rangeEl = document.getElementById('sip-corpus-range');
+  wrap.hidden = !visible;
+  wrap.classList.toggle('hidden', !visible);
+  toggle.textContent = visible ? 'Remove existing investment' : 'Add existing investment';
+  if (!visible) {
+    numEl.value = 0;
+    rangeEl.value = 0;
+  }
+}
+
 function recalcSIP(quick = false) {
+  const corpus = getSipExistingCorpus();
   const monthly = +document.getElementById('sip-monthly-num').value;
   const rate = +document.getElementById('sip-return-num').value;
   const stepUp = +document.getElementById('sip-stepup-num').value;
   const years = +document.getElementById('sip-years-num').value;
   const compounding = getCompoundingValue('sip-compounding');
-  const result = calculateSIP(monthly, rate, years, compounding, stepUp);
+  const result = calculateSIP(monthly, rate, years, compounding, stepUp, corpus);
   setCurrencyDisplay(document.getElementById('sip-total'), result.totalValue);
   setInflationAdjustedInput('sip', result.totalValue, years);
   updateInflationAdjustedDisplays();
   setCurrencyDisplay(document.getElementById('sip-invested'), result.investedAmount);
   setCurrencyDisplay(document.getElementById('sip-returns'), result.estimatedReturns);
-  updateCalcCharts('sip', [result.investedAmount, result.estimatedReturns], projectSIPTimeline(monthly, rate, years, compounding, stepUp), quick);
+  updateCalcCharts('sip', [result.investedAmount, result.estimatedReturns], projectSIPTimeline(monthly, rate, years, compounding, stepUp, corpus), quick);
 }
 
 function recalcLumpSum(quick = false) {
@@ -1050,20 +1073,29 @@ function recalcInterest(quick = false) {
 
 // ---------- Init inputs ----------
 suppressRecalc = true;
+bindDualInput('sip-corpus-num', 'sip-corpus-range', 'sip-corpus', recalcSIP, 0, 100000000);
 bindDualInput('sip-monthly-num', 'sip-monthly-range', 'sip-monthly', recalcSIP, 0, 1000000);
+
+document.getElementById('sip-corpus-toggle').addEventListener('click', () => {
+  const wrap = document.getElementById('sip-corpus-wrap');
+  const showing = wrap.hidden;
+  setSipCorpusVisible(showing);
+  if (showing) document.getElementById('sip-corpus-num').focus();
+  recalcSIP();
+});
 bindDualInput('sip-return-num', 'sip-return-range', 'sip-return', recalcSIP, 0, 24);
 bindDualInput('sip-stepup-num', 'sip-stepup-range', 'sip-stepup', recalcSIP, 0, 50);
-bindDualInput('sip-years-num', 'sip-years-range', 'sip-years', recalcSIP, 0, 100);
+bindDualInput('sip-years-num', 'sip-years-range', 'sip-years', recalcSIP, 1, 100);
 
 bindDualInput('lump-amount-num', 'lump-amount-range', 'lump-amount', recalcLumpSum, 0, 100000000);
 bindDualInput('lump-return-num', 'lump-return-range', 'lump-return', recalcLumpSum, 0, 24);
-bindDualInput('lump-years-num', 'lump-years-range', 'lump-years', recalcLumpSum, 0, 100);
+bindDualInput('lump-years-num', 'lump-years-range', 'lump-years', recalcLumpSum, 1, 100);
 
 bindDualInput('swp-corpus-num', 'swp-corpus-range', 'swp-corpus', recalcSWP, 0, 100000000);
 bindDualInput('swp-withdraw-num', 'swp-withdraw-range', 'swp-withdraw', recalcSWP, 0, 1000000);
 bindDualInput('swp-return-num', 'swp-return-range', 'swp-return', recalcSWP, 0, 24);
 bindDualInput('swp-increase-num', 'swp-increase-range', 'swp-increase', recalcSWP, 0, 50);
-bindDualInput('swp-years-num', 'swp-years-range', 'swp-years', recalcSWP, 0, 100);
+bindDualInput('swp-years-num', 'swp-years-range', 'swp-years', recalcSWP, 1, 100);
 
 bindCompoundingRadios('sip-compounding', recalcSIP);
 bindCompoundingRadios('lump-compounding', recalcLumpSum);
@@ -1079,7 +1111,7 @@ document.querySelectorAll('input[name="interest-type"]').forEach((radio) => {
 
 bindDualInput('int-principal-num', 'int-principal-range', 'int-principal', recalcInterest, 0, 10000000);
 bindDualInput('int-rate-num', 'int-rate-range', 'int-rate', recalcInterest, 0, 60);
-bindDualInput('int-years-num', 'int-years-range', 'int-years', recalcInterest, 0, 100);
+bindDualInput('int-years-num', 'int-years-range', 'int-years', recalcInterest, 1, 100);
 
 updateInterestCompoundingVisibility();
 bindChartViewToggles();
