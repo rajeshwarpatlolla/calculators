@@ -79,10 +79,8 @@ function setActiveTab(tabName, { persist = true } = {}) {
 }
 
 function resizeChartsForTab(tabName) {
-  const pieByTab = { sip: sipChart, lumpsum: lumpChart, swp: swpChart, interest: interestChart };
-  const lineByTab = { sip: sipLineChart, lumpsum: lumpLineChart, swp: swpLineChart, interest: interestLineChart };
   const view = chartViewModes[tabName] || 'pie';
-  const chart = view === 'line' ? lineByTab[tabName] : pieByTab[tabName];
+  const chart = view === 'line' ? lineCharts[tabName] : pieCharts[tabName];
   if (chart) chart.resize();
 }
 
@@ -117,7 +115,7 @@ let suppressRecalc = false;
 // ---------- Validation ----------
 function sanitizeNumber(value, min, max, fallback) {
   const n = Number(value);
-  if (!Number.isFinite(n) || Number.isNaN(n)) return fallback;
+  if (!Number.isFinite(n)) return fallback;
   return Math.min(max, Math.max(min, n));
 }
 
@@ -125,18 +123,7 @@ function sanitizeNumber(value, min, max, fallback) {
 function formatCurrency(amount) {
   const n = Math.round(Number(amount) || 0);
   const sign = n < 0 ? '-' : '';
-  const abs = Math.abs(n);
-  const str = abs.toString();
-  if (str.length <= 3) return `${sign}₹${str}`;
-  const last3 = str.slice(-3);
-  let rest = str.slice(0, -3);
-  const parts = [];
-  while (rest.length > 2) {
-    parts.unshift(rest.slice(-2));
-    rest = rest.slice(0, -2);
-  }
-  if (rest.length) parts.unshift(rest);
-  return `${sign}₹${parts.join(',')},${last3}`;
+  return `${sign}₹${Math.abs(n).toLocaleString('en-IN')}`;
 }
 
 function formatIndianShortNumber(value) {
@@ -177,8 +164,14 @@ function formatShort(value) {
 // ≥ ₹1 Cr → short form only (e.g. ₹7.17 cr); otherwise full Indian currency
 function setCurrencyDisplay(el, amount) {
   if (!el) return;
-  const abs = Math.abs(Math.round(Number(amount) || 0));
-  el.textContent = abs >= 1e7 ? `₹${formatIndianShortNumber(amount)}` : formatCurrency(amount);
+  const n = Number(amount) || 0;
+  const abs = Math.abs(Math.round(n));
+  if (abs >= 1e7) {
+    const short = formatIndianShortNumber(abs);
+    el.textContent = n < 0 ? `-₹${short}` : `₹${short}`;
+    return;
+  }
+  el.textContent = formatCurrency(n);
 }
 
 // Compact labels for chart axes — Cr / L / K (Indian units)
@@ -224,11 +217,18 @@ function setInflationAdjustedInput(calc, amount, years) {
   inflationAdjustedInputs[calc] = { amount: Number(amount) || 0, years: sanitizeNumber(years, 0, 100, 0) };
 }
 
+const INFLATION_DISPLAYS = [
+  ['sip-total-inflation', 'sip'],
+  ['lump-total-inflation', 'lumpsum'],
+  ['swp-remaining-inflation', 'swp'],
+  ['int-total-inflation', 'interest'],
+];
+
 function updateInflationAdjustedDisplays() {
-  setCurrencyDisplay(document.getElementById('sip-total-inflation'), inflationAdjustedValue(inflationAdjustedInputs.sip.amount, inflationAdjustedInputs.sip.years));
-  setCurrencyDisplay(document.getElementById('lump-total-inflation'), inflationAdjustedValue(inflationAdjustedInputs.lumpsum.amount, inflationAdjustedInputs.lumpsum.years));
-  setCurrencyDisplay(document.getElementById('swp-remaining-inflation'), inflationAdjustedValue(inflationAdjustedInputs.swp.amount, inflationAdjustedInputs.swp.years));
-  setCurrencyDisplay(document.getElementById('int-total-inflation'), inflationAdjustedValue(inflationAdjustedInputs.interest.amount, inflationAdjustedInputs.interest.years));
+  INFLATION_DISPLAYS.forEach(([elId, calc]) => {
+    const { amount, years } = inflationAdjustedInputs[calc];
+    setCurrencyDisplay(document.getElementById(elId), inflationAdjustedValue(amount, years));
+  });
 }
 
 function initInflationRateSelects() {
@@ -329,42 +329,45 @@ function calculateLumpSum(investmentAmount, annualRatePercent, years, compoundin
 }
 
 // ---------- SWP: monthly withdrawals; growth credited at selected compounding frequency ----------
+// Balance may go negative when planned withdrawals exceed corpus — that shortfall is shown as remaining.
+function applySWPMonth(state, annualIncr, growthRate, monthsPerCompound, compounding) {
+  if (state.month > 1 && (state.month - 1) % 12 === 0) state.withdraw *= 1 + annualIncr;
+
+  state.monthsSinceCompound += 1;
+  const due = compounding === 'monthly' || state.monthsSinceCompound >= monthsPerCompound;
+  if (due) {
+    if (state.balance > 0) state.balance *= 1 + growthRate;
+    state.monthsSinceCompound = 0;
+  }
+
+  state.balance -= state.withdraw;
+  state.totalWithdrawn += state.withdraw;
+}
+
 function runSWPSimulation(corpus, monthlyWithdrawal, annualReturnPercent, annualIncreasePercent, years, compounding) {
   const { periodsPerYear } = getCompoundingConfig(compounding);
   const annualIncr = annualIncreasePercent / 100;
   const yearsSafe = sanitizeNumber(years, 0, 100, 0);
   const totalMonths = Math.round(yearsSafe * 12);
   const monthsPerCompound = 12 / periodsPerYear;
-  const growthRate = compounding === 'monthly' ? getEffectivePeriodicRate(annualReturnPercent, 12) : getEffectivePeriodicRate(annualReturnPercent, periodsPerYear);
+  const growthRate = getEffectivePeriodicRate(annualReturnPercent, periodsPerYear);
 
-  let balance = sanitizeNumber(corpus, 0, 1e12, 0);
-  let withdraw = sanitizeNumber(monthlyWithdrawal, 0, 1e9, 0);
-  let totalWithdrawn = 0;
-  let monthsSinceCompound = 0;
+  const state = {
+    month: 0,
+    balance: sanitizeNumber(corpus, 0, 1e12, 0),
+    withdraw: sanitizeNumber(monthlyWithdrawal, 0, 1e9, 0),
+    totalWithdrawn: 0,
+    monthsSinceCompound: 0,
+  };
 
-  for (let m = 1; m <= totalMonths; m++) {
-    if (m > 1 && (m - 1) % 12 === 0) withdraw *= 1 + annualIncr;
-
-    monthsSinceCompound += 1;
-    if (compounding === 'monthly') {
-      balance *= 1 + growthRate;
-    } else if (monthsSinceCompound >= monthsPerCompound) {
-      balance *= 1 + growthRate;
-      monthsSinceCompound = 0;
-    }
-
-    const actualWithdraw = Math.min(withdraw, Math.max(0, balance));
-    balance -= actualWithdraw;
-    totalWithdrawn += actualWithdraw;
-    balance = Math.max(0, balance);
-
-    if (balance <= 0 || actualWithdraw < withdraw - 0.01) break;
+  for (state.month = 1; state.month <= totalMonths; state.month++) {
+    applySWPMonth(state, annualIncr, growthRate, monthsPerCompound, compounding);
   }
 
   return {
-    remainingCorpus: balance,
-    totalWithdrawn,
-    endingMonthlyWithdrawal: withdraw,
+    remainingCorpus: state.balance,
+    totalWithdrawn: state.totalWithdrawn,
+    endingMonthlyWithdrawal: state.withdraw,
   };
 }
 
@@ -410,67 +413,14 @@ function projectLumpSumTimeline(investmentAmount, annualRatePercent, years, comp
 }
 
 function projectSWPTimeline(corpus, monthlyWithdrawal, annualReturnPercent, annualIncreasePercent, years, compounding) {
-  const { periodsPerYear } = getCompoundingConfig(compounding);
-  const annualIncr = annualIncreasePercent / 100;
   const yearsSafe = sanitizeNumber(years, 0, 100, 0);
-  const totalMonths = Math.round(yearsSafe * 12);
-  const monthsPerCompound = 12 / periodsPerYear;
-  const growthRate = compounding === 'monthly' ? getEffectivePeriodicRate(annualReturnPercent, 12) : getEffectivePeriodicRate(annualReturnPercent, periodsPerYear);
-
-  let balance = sanitizeNumber(corpus, 0, 1e12, 0);
-  let withdraw = sanitizeNumber(monthlyWithdrawal, 0, 1e9, 0);
-  let totalWithdrawn = 0;
-  let monthsSinceCompound = 0;
-
-  const corpusSeries = [balance];
+  const corpusSeries = [sanitizeNumber(corpus, 0, 1e12, 0)];
   const withdrawnSeries = [0];
-  let depletedFromYear = null;
-
-  for (let m = 1; m <= totalMonths; m++) {
-    if (m > 1 && (m - 1) % 12 === 0) withdraw *= 1 + annualIncr;
-
-    monthsSinceCompound += 1;
-    if (compounding === 'monthly') {
-      balance *= 1 + growthRate;
-    } else if (monthsSinceCompound >= monthsPerCompound) {
-      balance *= 1 + growthRate;
-      monthsSinceCompound = 0;
-    }
-
-    const actualWithdraw = Math.min(withdraw, Math.max(0, balance));
-    balance -= actualWithdraw;
-    totalWithdrawn += actualWithdraw;
-    balance = Math.max(0, balance);
-
-    const depletedNow = balance <= 0 || actualWithdraw < withdraw - 0.01;
-
-    if (m % 12 === 0 || m === totalMonths) {
-      corpusSeries.push(balance);
-      withdrawnSeries.push(totalWithdrawn);
-    }
-
-    if (depletedNow) {
-      depletedFromYear = Math.min(yearsSafe, Math.ceil(m / 12));
-      while (corpusSeries.length <= depletedFromYear) {
-        corpusSeries.push(0);
-        withdrawnSeries.push(totalWithdrawn);
-      }
-      corpusSeries[depletedFromYear] = 0;
-      withdrawnSeries[depletedFromYear] = totalWithdrawn;
-      break;
-    }
+  for (let y = 1; y <= yearsSafe; y++) {
+    const r = calculateSWP(corpus, monthlyWithdrawal, annualReturnPercent, annualIncreasePercent, y, compounding);
+    corpusSeries.push(r.remainingCorpus);
+    withdrawnSeries.push(r.totalWithdrawn);
   }
-
-  const padCorpus = depletedFromYear !== null ? 0 : balance;
-  while (corpusSeries.length < yearsSafe + 1) {
-    corpusSeries.push(padCorpus);
-    withdrawnSeries.push(withdrawnSeries[withdrawnSeries.length - 1] ?? totalWithdrawn);
-  }
-
-  if (depletedFromYear !== null) {
-    for (let i = depletedFromYear; i < corpusSeries.length; i++) corpusSeries[i] = 0;
-  }
-
   return { labels: buildYearLabels(yearsSafe), corpus: corpusSeries, withdrawn: withdrawnSeries };
 }
 
@@ -490,16 +440,13 @@ function projectInterestTimeline(principal, annualRatePercent, years, interestTy
 }
 
 // ---------- Chart.js ----------
-let sipChart = null;
-let lumpChart = null;
-let swpChart = null;
-let interestChart = null;
-let sipLineChart = null;
-let lumpLineChart = null;
-let swpLineChart = null;
-let interestLineChart = null;
+const pieCharts = { sip: null, lumpsum: null, swp: null, interest: null };
+const lineCharts = { sip: null, lumpsum: null, swp: null, interest: null };
 const chartViewModes = { sip: 'pie', lumpsum: 'pie', swp: 'pie', interest: 'pie' };
 const lastTimeline = { sip: null, lumpsum: null, swp: null, interest: null };
+const PIE_CANVAS = { sip: 'sip-pie-chart', lumpsum: 'lump-pie-chart', swp: 'swp-pie-chart', interest: 'int-pie-chart' };
+const LINE_CANVAS = { sip: 'sip-line-chart', lumpsum: 'lump-line-chart', swp: 'swp-line-chart', interest: 'int-line-chart' };
+const CHART_VARIANT = { sip: 'sip', lumpsum: 'lump', swp: 'swp', interest: 'interest' };
 
 const NIGHT_CHART = {
   invested: '#2a3548',
@@ -537,44 +484,18 @@ function getChartLabelSet(variant) {
 
 function getChartPalette(variant) {
   const isDark = document.documentElement.classList.contains('dark');
-  if (variant === 'sip') {
-    return {
-      segmentA: isDark ? NIGHT_CHART.invested : '#e2e8f0',
-      segmentAHover: isDark ? NIGHT_CHART.investedHover : '#cbd5e1',
-      segmentB: isDark ? '#5b9cf5' : '#2563eb',
-      segmentBHover: isDark ? '#7eb3f7' : '#3b82f6',
-      border: isDark ? NIGHT_CHART.border : '#ffffff',
-      text: isDark ? NIGHT_CHART.legend : '#475569',
-      tick: isDark ? NIGHT_CHART.legendMuted : '#64748b',
-    };
-  }
-  if (variant === 'swp') {
-    return {
-      segmentA: isDark ? NIGHT_CHART.invested : '#e2e8f0',
-      segmentAHover: isDark ? NIGHT_CHART.investedHover : '#cbd5e1',
-      segmentB: isDark ? '#a78bfa' : '#7c3aed',
-      segmentBHover: isDark ? '#c4b5fd' : '#8b5cf6',
-      border: isDark ? NIGHT_CHART.border : '#ffffff',
-      text: isDark ? NIGHT_CHART.legend : '#475569',
-      tick: isDark ? NIGHT_CHART.legendMuted : '#64748b',
-    };
-  }
-  if (variant === 'interest') {
-    return {
-      segmentA: isDark ? NIGHT_CHART.invested : '#e2e8f0',
-      segmentAHover: isDark ? NIGHT_CHART.investedHover : '#cbd5e1',
-      segmentB: isDark ? '#fbbf24' : '#f59e0b',
-      segmentBHover: isDark ? '#fcd34d' : '#d97706',
-      border: isDark ? NIGHT_CHART.border : '#ffffff',
-      text: isDark ? NIGHT_CHART.legend : '#475569',
-      tick: isDark ? NIGHT_CHART.legendMuted : '#64748b',
-    };
-  }
+  const accents = {
+    sip: { b: '#2563eb', bDark: '#5b9cf5', bh: '#3b82f6', bhDark: '#7eb3f7', a: '#e2e8f0', ah: '#cbd5e1' },
+    swp: { b: '#7c3aed', bDark: '#a78bfa', bh: '#8b5cf6', bhDark: '#c4b5fd', a: '#e2e8f0', ah: '#cbd5e1' },
+    interest: { b: '#f59e0b', bDark: '#fbbf24', bh: '#d97706', bhDark: '#fcd34d', a: '#e2e8f0', ah: '#cbd5e1' },
+    lump: { b: '#00b386', bDark: '#00d09c', bh: '#00d09c', bhDark: '#34d399', a: '#e7e5e4', ah: '#d6d3d1' },
+  };
+  const accent = accents[variant] || accents.lump;
   return {
-    segmentA: isDark ? NIGHT_CHART.invested : '#e7e5e4',
-    segmentAHover: isDark ? NIGHT_CHART.investedHover : '#d6d3d1',
-    segmentB: isDark ? '#00d09c' : '#00b386',
-    segmentBHover: isDark ? '#34d399' : '#00d09c',
+    segmentA: isDark ? NIGHT_CHART.invested : accent.a,
+    segmentAHover: isDark ? NIGHT_CHART.investedHover : accent.ah,
+    segmentB: isDark ? accent.bDark : accent.b,
+    segmentBHover: isDark ? accent.bhDark : accent.bh,
     border: isDark ? NIGHT_CHART.border : '#ffffff',
     text: isDark ? NIGHT_CHART.legend : '#475569',
     tick: isDark ? NIGHT_CHART.legendMuted : '#64748b',
@@ -829,10 +750,7 @@ function createLineChart(canvasId, variant, timeline, existingChart, quickUpdate
 function refreshLineChart(calc, quick = false) {
   const timeline = lastTimeline[calc];
   if (!timeline) return;
-  if (calc === 'sip') sipLineChart = createLineChart('sip-line-chart', 'sip', timeline, sipLineChart, quick);
-  else if (calc === 'lumpsum') lumpLineChart = createLineChart('lump-line-chart', 'lump', timeline, lumpLineChart, quick);
-  else if (calc === 'swp') swpLineChart = createLineChart('swp-line-chart', 'swp', timeline, swpLineChart, quick);
-  else if (calc === 'interest') interestLineChart = createLineChart('int-line-chart', 'interest', timeline, interestLineChart, quick);
+  lineCharts[calc] = createLineChart(LINE_CANVAS[calc], CHART_VARIANT[calc], timeline, lineCharts[calc], quick);
 }
 
 function setChartView(calc, view) {
@@ -858,29 +776,26 @@ function bindChartViewToggles() {
 
 function updateCalcCharts(calc, pieArgs, timeline, quick = false) {
   lastTimeline[calc] = timeline;
-  const pieCanvas = { sip: 'sip-pie-chart', lumpsum: 'lump-pie-chart', swp: 'swp-pie-chart', interest: 'int-pie-chart' };
-
-  if (calc === 'sip') {
-    sipChart = createDonutChart(pieCanvas.sip, 'sip', pieArgs[0], pieArgs[1], sipChart, pieArgs[2], quick);
-  } else if (calc === 'lumpsum') {
-    lumpChart = createDonutChart(pieCanvas.lumpsum, 'lump', pieArgs[0], pieArgs[1], lumpChart, pieArgs[2], quick);
-  } else if (calc === 'swp') {
-    swpChart = createDonutChart(pieCanvas.swp, 'swp', pieArgs[0], pieArgs[1], swpChart, pieArgs[2], quick);
-  } else if (calc === 'interest') {
-    interestChart = createDonutChart(pieCanvas.interest, 'interest', pieArgs[0], pieArgs[1], interestChart, pieArgs[2], quick);
-  }
+  pieCharts[calc] = createDonutChart(
+    PIE_CANVAS[calc],
+    CHART_VARIANT[calc],
+    pieArgs[0],
+    pieArgs[1],
+    pieCharts[calc],
+    pieArgs[2],
+    quick
+  );
   if (chartViewModes[calc] === 'line') refreshLineChart(calc, quick);
 }
 
 function updateChartsTheme() {
-  if (sipChart) createDonutChart('sip-pie-chart', 'sip', sipChart.data.datasets[0].data[0], sipChart.data.datasets[0].data[1], sipChart, sipChart.data.labels);
-  if (lumpChart) createDonutChart('lump-pie-chart', 'lump', lumpChart.data.datasets[0].data[0], lumpChart.data.datasets[0].data[1], lumpChart, lumpChart.data.labels);
-  if (swpChart) createDonutChart('swp-pie-chart', 'swp', swpChart.data.datasets[0].data[0], swpChart.data.datasets[0].data[1], swpChart, swpChart.data.labels);
-  if (interestChart) createDonutChart('int-pie-chart', 'interest', interestChart.data.datasets[0].data[0], interestChart.data.datasets[0].data[1], interestChart, interestChart.data.labels);
-  if (chartViewModes.sip === 'line' && lastTimeline.sip) refreshLineChart('sip');
-  if (chartViewModes.lumpsum === 'line' && lastTimeline.lumpsum) refreshLineChart('lumpsum');
-  if (chartViewModes.swp === 'line' && lastTimeline.swp) refreshLineChart('swp');
-  if (chartViewModes.interest === 'line' && lastTimeline.interest) refreshLineChart('interest');
+  Object.keys(PIE_CANVAS).forEach((calc) => {
+    const chart = pieCharts[calc];
+    if (!chart) return;
+    const [a, b] = chart.data.datasets[0].data;
+    pieCharts[calc] = createDonutChart(PIE_CANVAS[calc], CHART_VARIANT[calc], a, b, chart, chart.data.labels);
+    if (chartViewModes[calc] === 'line' && lastTimeline[calc]) refreshLineChart(calc);
+  });
 }
 
 function getCompoundingValue(groupName) {
@@ -987,10 +902,14 @@ function bindDualInput(numId, rangeId, fieldKey, onUpdate, min, max) {
 }
 
 // ---------- Recalculate ----------
+function inputNumber(id) {
+  return +document.getElementById(id).value || 0;
+}
+
 function getSipExistingCorpus() {
   const wrap = document.getElementById('sip-corpus-wrap');
   if (!wrap || wrap.hidden) return 0;
-  return +document.getElementById('sip-corpus-num').value || 0;
+  return inputNumber('sip-corpus-num') || 0;
 }
 
 function setSipCorpusVisible(visible) {
@@ -1009,10 +928,10 @@ function setSipCorpusVisible(visible) {
 
 function recalcSIP(quick = false) {
   const corpus = getSipExistingCorpus();
-  const monthly = +document.getElementById('sip-monthly-num').value;
-  const rate = +document.getElementById('sip-return-num').value;
-  const stepUp = +document.getElementById('sip-stepup-num').value;
-  const years = +document.getElementById('sip-years-num').value;
+  const monthly = inputNumber('sip-monthly-num');
+  const rate = inputNumber('sip-return-num');
+  const stepUp = inputNumber('sip-stepup-num');
+  const years = inputNumber('sip-years-num');
   const compounding = getCompoundingValue('sip-compounding');
   const result = calculateSIP(monthly, rate, years, compounding, stepUp, corpus);
   setCurrencyDisplay(document.getElementById('sip-total'), result.totalValue);
@@ -1024,9 +943,9 @@ function recalcSIP(quick = false) {
 }
 
 function recalcLumpSum(quick = false) {
-  const amount = +document.getElementById('lump-amount-num').value;
-  const rate = +document.getElementById('lump-return-num').value;
-  const years = +document.getElementById('lump-years-num').value;
+  const amount = inputNumber('lump-amount-num');
+  const rate = inputNumber('lump-return-num');
+  const years = inputNumber('lump-years-num');
   const compounding = getCompoundingValue('lump-compounding');
   const result = calculateLumpSum(amount, rate, years, compounding);
   setCurrencyDisplay(document.getElementById('lump-total'), result.totalValue);
@@ -1038,11 +957,11 @@ function recalcLumpSum(quick = false) {
 }
 
 function recalcSWP(quick = false) {
-  const corpus = +document.getElementById('swp-corpus-num').value;
-  const withdraw = +document.getElementById('swp-withdraw-num').value;
-  const rate = +document.getElementById('swp-return-num').value;
-  const increase = +document.getElementById('swp-increase-num').value;
-  const years = +document.getElementById('swp-years-num').value;
+  const corpus = inputNumber('swp-corpus-num');
+  const withdraw = inputNumber('swp-withdraw-num');
+  const rate = inputNumber('swp-return-num');
+  const increase = inputNumber('swp-increase-num');
+  const years = inputNumber('swp-years-num');
   const compounding = getCompoundingValue('swp-compounding');
   const result = calculateSWP(corpus, withdraw, rate, increase, years, compounding);
 
@@ -1057,9 +976,9 @@ function recalcSWP(quick = false) {
 }
 
 function recalcInterest(quick = false) {
-  const principal = +document.getElementById('int-principal-num').value;
-  const rate = +document.getElementById('int-rate-num').value;
-  const years = +document.getElementById('int-years-num').value;
+  const principal = inputNumber('int-principal-num');
+  const rate = inputNumber('int-rate-num');
+  const years = inputNumber('int-years-num');
   const interestType = getInterestType();
   const compounding = getCompoundingValue('interest-compounding');
   const result = calculateInterest(principal, rate, years, interestType, compounding);
