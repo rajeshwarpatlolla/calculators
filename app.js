@@ -267,6 +267,12 @@ function getNominalPeriodicRate(annualRatePercent, periodsPerYear) {
   return sanitizeNumber(annualRatePercent, 0, 100, 0) / 100 / periodsPerYear;
 }
 
+// Effective periodic rate — same ~CAGR regardless of compounding frequency
+function getEffectivePeriodicRate(annualRatePercent, periodsPerYear) {
+  const annual = sanitizeNumber(annualRatePercent, 0, 100, 0) / 100;
+  return Math.pow(1 + annual, 1 / periodsPerYear) - 1;
+}
+
 // Monthly growth rate from nominal compounding frequency (SIP contributions are monthly)
 function getMonthlyRateFromCompounding(annualRatePercent, compounding) {
   const { periodsPerYear } = getCompoundingConfig(compounding);
@@ -323,14 +329,14 @@ function calculateLumpSum(investmentAmount, annualRatePercent, years, compoundin
 }
 
 // ---------- SWP: month-by-month; withdraw first, then credit return only at compounding period ends ----------
-// Monthly: every month → withdraw → apply r/12
-// Quarterly: every month → withdraw; every 3rd month → apply r/4
-// Annually: every month → withdraw; every 12th month → apply r
+// Uses effective period rate (1+r)^(1/n)-1 so annual CAGR stays ~r across frequencies.
+// Monthly: every month → withdraw → apply (1+r)^(1/12)-1
+// Quarterly: every month → withdraw; every 3rd month → apply (1+r)^(1/4)-1
 // Balance may go negative when planned withdrawals exceed corpus — that shortfall is shown as remaining.
 function runSWPSimulation(corpus, monthlyWithdrawal, annualReturnPercent, annualIncreasePercent, years, compounding) {
   const { periodsPerYear } = getCompoundingConfig(compounding);
   const monthsPerCompound = 12 / periodsPerYear;
-  const periodRate = getNominalPeriodicRate(annualReturnPercent, periodsPerYear);
+  const periodRate = getEffectivePeriodicRate(annualReturnPercent, periodsPerYear);
   const annualIncr = annualIncreasePercent / 100;
   const yearsSafe = sanitizeNumber(years, 0, 100, 0);
   const totalMonths = Math.round(yearsSafe * 12);
