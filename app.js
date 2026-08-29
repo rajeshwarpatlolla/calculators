@@ -262,12 +262,6 @@ function getCompoundingConfig(freq) {
   return COMPOUNDING[freq] || COMPOUNDING.monthly;
 }
 
-// Effective periodic rate — same CAGR regardless of compounding count
-function getEffectivePeriodicRate(annualRatePercent, periodsPerYear) {
-  const annual = sanitizeNumber(annualRatePercent, 0, 100, 0) / 100;
-  return Math.pow(1 + annual, 1 / periodsPerYear) - 1;
-}
-
 // Nominal periodic rate (annual ÷ periods) — more frequent compounding → higher returns
 function getNominalPeriodicRate(annualRatePercent, periodsPerYear) {
   return sanitizeNumber(annualRatePercent, 0, 100, 0) / 100 / periodsPerYear;
@@ -328,46 +322,37 @@ function calculateLumpSum(investmentAmount, annualRatePercent, years, compoundin
   };
 }
 
-// ---------- SWP: monthly withdrawals; growth credited at selected compounding frequency ----------
+// ---------- SWP: month-by-month; withdraw first, then credit return only at compounding period ends ----------
+// Monthly: every month → withdraw → apply r/12
+// Quarterly: every month → withdraw; every 3rd month → apply r/4
+// Annually: every month → withdraw; every 12th month → apply r
 // Balance may go negative when planned withdrawals exceed corpus — that shortfall is shown as remaining.
-function applySWPMonth(state, annualIncr, growthRate, monthsPerCompound, compounding) {
-  if (state.month > 1 && (state.month - 1) % 12 === 0) state.withdraw *= 1 + annualIncr;
-
-  state.monthsSinceCompound += 1;
-  const due = compounding === 'monthly' || state.monthsSinceCompound >= monthsPerCompound;
-  if (due) {
-    if (state.balance > 0) state.balance *= 1 + growthRate;
-    state.monthsSinceCompound = 0;
-  }
-
-  state.balance -= state.withdraw;
-  state.totalWithdrawn += state.withdraw;
-}
-
 function runSWPSimulation(corpus, monthlyWithdrawal, annualReturnPercent, annualIncreasePercent, years, compounding) {
   const { periodsPerYear } = getCompoundingConfig(compounding);
+  const monthsPerCompound = 12 / periodsPerYear;
+  const periodRate = getNominalPeriodicRate(annualReturnPercent, periodsPerYear);
   const annualIncr = annualIncreasePercent / 100;
   const yearsSafe = sanitizeNumber(years, 0, 100, 0);
   const totalMonths = Math.round(yearsSafe * 12);
-  const monthsPerCompound = 12 / periodsPerYear;
-  const growthRate = getEffectivePeriodicRate(annualReturnPercent, periodsPerYear);
 
-  const state = {
-    month: 0,
-    balance: sanitizeNumber(corpus, 0, 1e12, 0),
-    withdraw: sanitizeNumber(monthlyWithdrawal, 0, 1e9, 0),
-    totalWithdrawn: 0,
-    monthsSinceCompound: 0,
-  };
+  let balance = sanitizeNumber(corpus, 0, 1e12, 0);
+  let withdraw = sanitizeNumber(monthlyWithdrawal, 0, 1e9, 0);
+  let totalWithdrawn = 0;
 
-  for (state.month = 1; state.month <= totalMonths; state.month++) {
-    applySWPMonth(state, annualIncr, growthRate, monthsPerCompound, compounding);
+  for (let m = 1; m <= totalMonths; m++) {
+    if (m > 1 && (m - 1) % 12 === 0) withdraw *= 1 + annualIncr;
+    balance -= withdraw;
+    totalWithdrawn += withdraw;
+    // Credit return only at compounding period end, and only on positive corpus
+    if (m % monthsPerCompound === 0 && balance > 0 && periodRate > 0) {
+      balance *= 1 + periodRate;
+    }
   }
 
   return {
-    remainingCorpus: state.balance,
-    totalWithdrawn: state.totalWithdrawn,
-    endingMonthlyWithdrawal: state.withdraw,
+    remainingCorpus: balance,
+    totalWithdrawn,
+    endingMonthlyWithdrawal: withdraw,
   };
 }
 
